@@ -1,0 +1,398 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Public/general non-PII user preferences and household settings for MarketPulse.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the user",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name of the shopper",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "household": {
+          "type": "string",
+          "description": "Household label",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "location": {
+          "type": "string",
+          "description": "Current city and country in Nigeria",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "activeRegionId": {
+          "type": "string",
+          "description": "Selected Nigerian market region identifier",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "avatarInitials": {
+          "type": "string",
+          "description": "Two-letter avatar initials",
+          "minLength": 1,
+          "maxLength": 10
+        },
+        "twoFactorEnabled": {
+          "type": "boolean",
+          "description": "Whether two-factor verification is enabled"
+        },
+        "biometricLock": {
+          "type": "boolean",
+          "description": "Whether biometric lock is enabled"
+        },
+        "isSecured": {
+          "type": "boolean",
+          "description": "Whether the account is linked and secured"
+        },
+        "syncState": {
+          "type": "string",
+          "description": "Cloud sync state indicator",
+          "enum": ["synced", "syncing", "local_only"],
+          "maxLength": 20
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when profile was created"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when profile was last updated"
+        }
+      },
+      "required": [
+        "uid",
+        "name",
+        "household",
+        "location",
+        "activeRegionId",
+        "avatarInitials",
+        "twoFactorEnabled",
+        "biometricLock",
+        "isSecured",
+        "syncState",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "UserPrivateInfo": {
+      "title": "UserPrivateInfo",
+      "description": "Isolated PII contact details for the user (email, phone, recovery contact).",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the user",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "User email address",
+          "maxLength": 150
+        },
+        "phone": {
+          "type": "string",
+          "description": "User phone number",
+          "maxLength": 50
+        },
+        "contact": {
+          "type": "string",
+          "description": "Primary recovery contact string",
+          "maxLength": 150
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of creation"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of update"
+        }
+      },
+      "required": ["uid", "email", "phone", "contact", "createdAt", "updatedAt"]
+    },
+    "UserBudget": {
+      "title": "UserBudget",
+      "description": "User household budget target and category allocations in Nigerian Naira (NGN).",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "monthlyTarget": {
+          "type": "number",
+          "description": "Total monthly target in Naira"
+        },
+        "spentSoFar": {
+          "type": "number",
+          "description": "Amount spent so far in Naira"
+        },
+        "currentDay": {
+          "type": "number",
+          "description": "Current day of the budget cycle"
+        },
+        "totalDays": {
+          "type": "number",
+          "description": "Total days in the budget cycle"
+        },
+        "frequency": {
+          "type": "string",
+          "description": "Budget cycle frequency",
+          "enum": ["Weekly", "Fortnightly", "Monthly"],
+          "maxLength": 20
+        },
+        "produceBudget": {
+          "type": "number",
+          "description": "Allocated Naira budget for Produce"
+        },
+        "produceSpent": {
+          "type": "number",
+          "description": "Spent Naira amount for Produce"
+        },
+        "proteinsBudget": {
+          "type": "number",
+          "description": "Allocated Naira budget for Proteins"
+        },
+        "proteinsSpent": {
+          "type": "number",
+          "description": "Spent Naira amount for Proteins"
+        },
+        "pantryBudget": {
+          "type": "number",
+          "description": "Allocated Naira budget for Pantry Staples"
+        },
+        "pantrySpent": {
+          "type": "number",
+          "description": "Spent Naira amount for Pantry Staples"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp"
+        }
+      },
+      "required": [
+        "uid",
+        "monthlyTarget",
+        "spentSoFar",
+        "currentDay",
+        "totalDays",
+        "frequency",
+        "produceBudget",
+        "produceSpent",
+        "proteinsBudget",
+        "proteinsSpent",
+        "pantryBudget",
+        "pantrySpent",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Trip": {
+      "title": "Trip",
+      "description": "A recorded Nigerian market shopping trip header.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "market": {
+          "type": "string",
+          "description": "Market name (e.g., Mile 12 Market)",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "date": {
+          "type": "string",
+          "description": "Formatted display date",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "rawDate": {
+          "type": "string",
+          "description": "ISO date string",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "itemsCount": {
+          "type": "number",
+          "description": "Number of line items in this trip"
+        },
+        "total": {
+          "type": "number",
+          "description": "Total Naira spent on this trip"
+        },
+        "syncStatus": {
+          "type": "string",
+          "description": "Synchronization status",
+          "enum": ["synced", "syncing", "local_only"],
+          "maxLength": 20
+        },
+        "pctChange": {
+          "type": "number",
+          "description": "Percentage change vs previous equivalent basket"
+        },
+        "isPositiveChange": {
+          "type": "boolean",
+          "description": "True if prices increased compared to baseline"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp"
+        }
+      },
+      "required": [
+        "uid",
+        "market",
+        "date",
+        "rawDate",
+        "itemsCount",
+        "total",
+        "syncStatus",
+        "pctChange",
+        "isPositiveChange",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "TripItem": {
+      "title": "TripItem",
+      "description": "Individual grocery item purchased during a shopping trip.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "tripId": {
+          "type": "string",
+          "description": "Parent trip document ID",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Commodity name",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "category": {
+          "type": "string",
+          "description": "Grocery category",
+          "enum": ["Produce", "Proteins", "Pantry Staples", "Household", "Spices"],
+          "maxLength": 40
+        },
+        "quantity": {
+          "type": "number",
+          "description": "Purchased quantity"
+        },
+        "unit": {
+          "type": "string",
+          "description": "Unit of measurement (kg, bag, basket, paint, derica, etc.)",
+          "minLength": 1,
+          "maxLength": 30
+        },
+        "unitDetail": {
+          "type": "string",
+          "description": "Formatted unit description",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "price": {
+          "type": "number",
+          "description": "Price paid in Nigerian Naira"
+        },
+        "annotationType": {
+          "type": "string",
+          "description": "Price intelligence annotation type",
+          "enum": ["history", "community", "unsure", "outlier", "none"],
+          "maxLength": 20
+        },
+        "annotationText": {
+          "type": "string",
+          "description": "Optional context message",
+          "maxLength": 200
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp"
+        }
+      },
+      "required": [
+        "uid",
+        "tripId",
+        "name",
+        "category",
+        "quantity",
+        "unit",
+        "unitDetail",
+        "price",
+        "annotationType",
+        "annotationText",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Non-PII user profile and regional preferences."
+    },
+    "/users/{userId}/private/{docId}": {
+      "schema": { "$ref": "#/entities/UserPrivateInfo" },
+      "description": "Isolated PII subcollection (email, phone, recovery contact) restricted strictly to owner."
+    },
+    "/users/{userId}/budgets/{budgetId}": {
+      "schema": { "$ref": "#/entities/UserBudget" },
+      "description": "User household budget targets and category tracking."
+    },
+    "/trips/{tripId}": {
+      "schema": { "$ref": "#/entities/Trip" },
+      "description": "Top-level shopping trip metadata owned by a specific user."
+    },
+    "/trips/{tripId}/items/{itemId}": {
+      "schema": { "$ref": "#/entities/TripItem" },
+      "description": "Subcollection of individual grocery line items belonging to a trip."
+    }
+  }
+}

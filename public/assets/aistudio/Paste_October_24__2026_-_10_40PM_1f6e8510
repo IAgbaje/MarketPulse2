@@ -1,0 +1,2622 @@
+<!-- Confirm and Correct - MarketPulse -->
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>MarketPulse - Confirm and Correct</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "tertiary": "#714800",
+                        "tertiary-fixed": "#ffddb5",
+                        "on-error": "#ffffff",
+                        "background": "#f8f9fd",
+                        "surface-container": "#eceef1",
+                        "surface-tint": "#1a648c",
+                        "error": "#ba1a1a",
+                        "inverse-on-surface": "#eff1f4",
+                        "surface-container-low": "#f2f3f7",
+                        "on-tertiary-fixed": "#2a1800",
+                        "on-primary-fixed-variant": "#004c6e",
+                        "primary-fixed-dim": "#8fcefa",
+                        "on-secondary-container": "#4f6576",
+                        "primary": "#00567c",
+                        "outline-variant": "#c0c7cf",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed": "#001e2f",
+                        "on-surface": "#191c1f",
+                        "surface-variant": "#e1e2e6",
+                        "on-secondary-fixed-variant": "#334959",
+                        "tertiary-fixed-dim": "#f8bb6a",
+                        "surface-bright": "#f8f9fd",
+                        "secondary": "#4b6172",
+                        "surface-dim": "#d8dade",
+                        "on-tertiary-container": "#ffe5c8",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-background": "#191c1f",
+                        "secondary-container": "#cbe3f7",
+                        "on-tertiary-fixed-variant": "#643f00",
+                        "inverse-surface": "#2e3134",
+                        "inverse-primary": "#8fcefa",
+                        "outline": "#71787f",
+                        "secondary-fixed": "#cee5f9",
+                        "primary-container": "#2a6f97",
+                        "on-secondary-fixed": "#051e2c",
+                        "secondary-fixed-dim": "#b2c9dd",
+                        "surface": "#f8f9fd",
+                        "on-surface-variant": "#40484e",
+                        "surface-container-high": "#e7e8ec",
+                        "primary-fixed": "#c8e6ff",
+                        "on-error-container": "#93000a",
+                        "on-primary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "tertiary-container": "#8e5f15",
+                        "surface-container-highest": "#e1e2e6",
+                        "on-primary-container": "#d7ecff"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter", "sans-serif"],
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .tabular-nums { font-variant-numeric: tabular-nums; }
+        .tap-highlight-transparent { -webkit-tap-highlight-color: transparent; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-[#FAF9F6] text-on-surface font-body antialiased selection:bg-primary-container selection:text-on-primary-container min-h-screen flex flex-col relative pb-32">
+<!-- TopAppBar -->
+<header class="w-full sticky top-0 z-50 bg-[#FAF9F6] flat no shadows transition-all duration-200" id="top-app-bar">
+<div class="flex items-center justify-between px-4 h-16 w-full max-w-md mx-auto">
+<button aria-label="Go back" class="w-12 h-12 flex items-center justify-center rounded-full hover:bg-surface-container-high active:scale-95 duration-100 transition-colors tap-highlight-transparent text-on-surface-variant">
+<span class="material-symbols-outlined text-[28px]" data-icon="arrow_back" style="font-variation-settings: 'wght' 300;">arrow_back</span>
+</button>
+<div class="flex-1 text-center flex flex-col items-center justify-center cursor-pointer active:scale-95 transition-transform duration-100 tap-highlight-transparent group rounded-lg hover:bg-surface-container-high py-1 px-2">
+<div class="flex items-center justify-center gap-1">
+<h1 class="font-headline font-bold text-[17px] text-on-surface group-hover:text-primary transition-colors tracking-tight">Mile 12 Market</h1>
+<span class="material-symbols-outlined text-[16px] text-outline" data-icon="edit" style="font-variation-settings: 'wght' 400;">edit</span>
+</div>
+<p class="font-label text-[13px] text-on-surface-variant">Today, 14 Oct</p>
+</div>
+<div class="w-12 h-12"></div> <!-- Spacer for centering -->
+</div>
+<!-- Subtle shadow on scroll -->
+<div class="absolute bottom-0 left-0 right-0 h-[1px] bg-outline-variant opacity-0 transition-opacity duration-200" id="header-border"></div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 w-full max-w-md mx-auto px-4 py-2 flex flex-col gap-3">
+<!-- Context Banner (Thin data/empty state prevention) -->
+<div class="bg-secondary-container/30 rounded-xl p-3 flex gap-3 items-start mb-2">
+<span class="material-symbols-outlined text-primary mt-0.5" data-icon="info" style="font-variation-settings: 'FILL' 1;">info</span>
+<p class="text-[14px] text-on-surface-variant leading-tight pt-0.5">Please review your extracted items. Tap any row to edit details or correct amounts.</p>
+</div>
+<!-- Item 1: Tomatoes -->
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)] active:scale-[0.98] transition-transform duration-150 cursor-pointer tap-highlight-transparent flex flex-col gap-1.5 border border-outline-variant/30">
+<div class="flex justify-between items-start gap-4">
+<div class="flex flex-col gap-0.5 flex-1">
+<h3 class="font-semibold text-[16px] text-on-surface leading-snug">Tomatoes</h3>
+<p class="text-[14px] text-on-surface-variant">4kg</p>
+</div>
+<div class="text-right flex flex-col items-end">
+<span class="font-bold text-[18px] text-on-surface tabular-nums tracking-tight">₦2,400</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5 mt-1 bg-surface-container-low w-fit px-2 py-1 rounded-md">
+<span class="material-symbols-outlined text-[14px] text-secondary" data-icon="history">history</span>
+<p class="text-[13px] text-secondary font-medium">You paid ₦2,100 on 4 Aug</p>
+</div>
+</div>
+<!-- Item 2: Atarodo Pepper -->
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)] active:scale-[0.98] transition-transform duration-150 cursor-pointer tap-highlight-transparent flex flex-col gap-1.5 border border-outline-variant/30">
+<div class="flex justify-between items-start gap-4">
+<div class="flex flex-col gap-0.5 flex-1">
+<h3 class="font-semibold text-[16px] text-on-surface leading-snug">Atarodo Pepper</h3>
+<p class="text-[14px] text-on-surface-variant">1 bag</p>
+</div>
+<div class="text-right flex flex-col items-end">
+<span class="font-bold text-[18px] text-on-surface tabular-nums tracking-tight">₦1,500</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5 mt-1 bg-surface-container-low w-fit px-2 py-1 rounded-md">
+<span class="material-symbols-outlined text-[14px] text-secondary" data-icon="group">group</span>
+<p class="text-[13px] text-secondary font-medium">Others at Mile 12 paid ₦1,400–₦1,600 · 8 reports</p>
+</div>
+</div>
+<!-- Item 3: Onions (Low Confidence) -->
+<div class="bg-tertiary-fixed/30 rounded-xl p-4 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)] active:scale-[0.98] transition-transform duration-150 cursor-pointer tap-highlight-transparent flex flex-col gap-1.5 border border-tertiary-fixed-dim/50 relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary-fixed-dim"></div>
+<div class="flex justify-between items-start gap-4 pl-1">
+<div class="flex flex-col gap-0.5 flex-1">
+<div class="flex items-center gap-2">
+<h3 class="font-semibold text-[16px] text-on-surface leading-snug">Onions</h3>
+<span class="bg-tertiary-fixed-dim/30 text-on-tertiary-fixed-variant text-[11px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">Unsure</span>
+</div>
+<p class="text-[14px] text-on-surface-variant">1 basket</p>
+</div>
+<div class="text-right flex flex-col items-end">
+<span class="font-bold text-[18px] text-on-surface tabular-nums tracking-tight">₦3,000</span>
+</div>
+</div>
+</div>
+<!-- Item 4: Rice (Outlier) -->
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)] active:scale-[0.98] transition-transform duration-150 cursor-pointer tap-highlight-transparent flex flex-col gap-1.5 border border-outline-variant/30">
+<div class="flex justify-between items-start gap-4">
+<div class="flex flex-col gap-0.5 flex-1">
+<h3 class="font-semibold text-[16px] text-on-surface leading-snug">Rice</h3>
+<p class="text-[14px] text-on-surface-variant">5kg</p>
+</div>
+<div class="text-right flex flex-col items-end gap-1">
+<span class="font-bold text-[18px] text-on-surface tabular-nums tracking-tight">₦12,500</span>
+<div class="flex items-center gap-1 bg-surface-variant text-on-surface-variant px-1.5 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wider">
+<span class="material-symbols-outlined text-[12px]" data-icon="priority_high">priority_high</span>
+                        Check this
+                    </div>
+</div>
+</div>
+</div>
+<!-- Item 5: Garri -->
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)] active:scale-[0.98] transition-transform duration-150 cursor-pointer tap-highlight-transparent flex flex-col gap-1.5 border border-outline-variant/30">
+<div class="flex justify-between items-start gap-4">
+<div class="flex flex-col gap-0.5 flex-1">
+<h3 class="font-semibold text-[16px] text-on-surface leading-snug">Garri</h3>
+<p class="text-[14px] text-on-surface-variant">1 paint</p>
+</div>
+<div class="text-right flex flex-col items-end">
+<span class="font-bold text-[18px] text-on-surface tabular-nums tracking-tight">₦1,200</span>
+</div>
+</div>
+</div>
+<!-- Item 6: Palm Oil -->
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)] active:scale-[0.98] transition-transform duration-150 cursor-pointer tap-highlight-transparent flex flex-col gap-1.5 border border-outline-variant/30">
+<div class="flex justify-between items-start gap-4">
+<div class="flex flex-col gap-0.5 flex-1">
+<h3 class="font-semibold text-[16px] text-on-surface leading-snug">Palm Oil</h3>
+<p class="text-[14px] text-on-surface-variant">1L</p>
+</div>
+<div class="text-right flex flex-col items-end">
+<span class="font-bold text-[18px] text-on-surface tabular-nums tracking-tight">₦1,000</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5 mt-1 bg-surface-container-low w-fit px-2 py-1 rounded-md">
+<span class="material-symbols-outlined text-[14px] text-secondary" data-icon="group">group</span>
+<p class="text-[13px] text-secondary font-medium">Others at Mile 12 paid ₦950–₦1,050 · 15 reports</p>
+</div>
+</div>
+<!-- Item 7: Frozen Chicken -->
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)] active:scale-[0.98] transition-transform duration-150 cursor-pointer tap-highlight-transparent flex flex-col gap-1.5 border border-outline-variant/30">
+<div class="flex justify-between items-start gap-4">
+<div class="flex flex-col gap-0.5 flex-1">
+<h3 class="font-semibold text-[16px] text-on-surface leading-snug">Frozen Chicken</h3>
+<p class="text-[14px] text-on-surface-variant">1kg</p>
+</div>
+<div class="text-right flex flex-col items-end">
+<span class="font-bold text-[18px] text-on-surface tabular-nums tracking-tight">₦2,800</span>
+</div>
+</div>
+</div>
+<!-- Item 8: Beans -->
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)] active:scale-[0.98] transition-transform duration-150 cursor-pointer tap-highlight-transparent flex flex-col gap-1.5 border border-outline-variant/30">
+<div class="flex justify-between items-start gap-4">
+<div class="flex flex-col gap-0.5 flex-1">
+<h3 class="font-semibold text-[16px] text-on-surface leading-snug">Beans</h3>
+<p class="text-[14px] text-on-surface-variant">2kg</p>
+</div>
+<div class="text-right flex flex-col items-end">
+<span class="font-bold text-[18px] text-on-surface tabular-nums tracking-tight">₦1,800</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5 mt-1 bg-surface-container-low w-fit px-2 py-1 rounded-md">
+<span class="material-symbols-outlined text-[14px] text-secondary" data-icon="history">history</span>
+<p class="text-[13px] text-secondary font-medium">You paid ₦1,750 on 20 Sep</p>
+</div>
+</div>
+<!-- Add Item Action -->
+<button class="flex items-center justify-center gap-2 py-4 mt-2 text-primary font-semibold active:opacity-70 transition-opacity tap-highlight-transparent">
+<span class="material-symbols-outlined text-[20px]" data-icon="add_circle">add_circle</span>
+            Add missing item
+        </button>
+</main>
+<!-- Sticky Footer Action Area -->
+<div class="fixed bottom-0 left-0 w-full z-50 bg-[#FAF9F6] border-t border-outline-variant/20 shadow-[0_-4px_16px_rgba(0,0,0,0.05)] pt-3 pb-6 px-4">
+<div class="w-full max-w-md mx-auto flex flex-col gap-3">
+<div class="flex justify-between items-baseline px-2">
+<span class="text-[15px] text-on-surface-variant font-medium">Trip Total</span>
+<span class="text-[24px] font-bold text-on-surface tabular-nums tracking-tight">₦25,100</span>
+</div>
+<button class="w-full bg-[#2A6F97] hover:bg-primary-fixed-variant text-on-primary font-semibold text-[16px] h-14 rounded-full flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-md tap-highlight-transparent">
+                Confirm and save
+                <span class="material-symbols-outlined text-[20px]" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</button>
+</div>
+</div>
+<!-- Navigation Shell Suppressed as this is a transactional flow -->
+<script>
+        // Simple scroll effect for TopAppBar
+        window.addEventListener('scroll', () => {
+            const border = document.getElementById('header-border');
+            if (window.scrollY > 10) {
+                border.classList.remove('opacity-0');
+            } else {
+                border.classList.add('opacity-0');
+            }
+        });
+    </script>
+</body></html>
+
+<!-- Trip Detail - MarketPulse -->
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+<title>Trip Details - MarketPulse</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed-dim": "#f8bb6a",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#40484e",
+                        "surface": "#f8f9fd",
+                        "on-primary-container": "#d7ecff",
+                        "inverse-primary": "#8fcefa",
+                        "surface-bright": "#f8f9fd",
+                        "surface-dim": "#d8dade",
+                        "surface-container-low": "#f2f3f7",
+                        "inverse-surface": "#2e3134",
+                        "on-error": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-fixed": "#2a1800",
+                        "surface-container-high": "#e7e8ec",
+                        "primary-fixed": "#c8e6ff",
+                        "on-primary-fixed-variant": "#004c6e",
+                        "on-tertiary-container": "#ffe5c8",
+                        "primary-container": "#2a6f97",
+                        "on-surface": "#191c1f",
+                        "tertiary": "#714800",
+                        "surface-container": "#eceef1",
+                        "on-secondary-fixed": "#051e2c",
+                        "on-secondary-fixed-variant": "#334959",
+                        "surface-variant": "#e1e2e6",
+                        "surface-container-highest": "#e1e2e6",
+                        "secondary-container": "#cbe3f7",
+                        "secondary-fixed": "#cee5f9",
+                        "outline-variant": "#c0c7cf",
+                        "secondary": "#4b6172",
+                        "background": "#f8f9fd",
+                        "secondary-fixed-dim": "#b2c9dd",
+                        "on-secondary-container": "#4f6576",
+                        "tertiary-fixed": "#ffddb5",
+                        "on-tertiary-fixed-variant": "#643f00",
+                        "tertiary-container": "#8e5f15",
+                        "error-container": "#ffdad6",
+                        "inverse-on-surface": "#eff1f4",
+                        "outline": "#71787f",
+                        "primary": "#00567c",
+                        "primary-fixed-dim": "#8fcefa",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "surface-tint": "#1a648c",
+                        "on-background": "#191c1f",
+                        "error": "#ba1a1a",
+                        "on-primary-fixed": "#001e2f"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "display": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Mobile-first constraints */
+        body {
+            max-width: 430px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: theme('colors.surface-dim'); /* Outer container background for visual distinction on wider screens */
+        }
+        
+        .app-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: theme('colors.background');
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+        
+        /* Ensure Material Symbols look correct */
+        .material-symbols-outlined {
+            font-variation-settings:
+            'FILL' 0,
+            'wght' 400,
+            'GRAD' 0,
+            'opsz' 24
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body text-on-background antialiased">
+<div class="app-container">
+<!-- TopAppBar (from JSON) -->
+<header class="flex items-center justify-between px-4 h-16 w-full max-w-lg mx-auto bg-surface dark:bg-surface-dim flat no shadows text-primary dark:text-primary-fixed-dim sticky top-0 z-10">
+<button aria-label="Go back" class="w-12 h-12 flex items-center justify-center hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors rounded-full active:scale-95 duration-100 text-on-surface-variant dark:text-outline">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="font-headline font-semibold text-on-surface dark:text-on-surface-variant text-lg">Trip Details</h1>
+<button aria-label="Edit trip" class="w-12 h-12 flex items-center justify-center hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors rounded-full active:scale-95 duration-100 text-on-surface-variant dark:text-outline">
+<span class="material-symbols-outlined text-primary dark:text-inverse-primary">edit</span>
+</button>
+</header>
+<main class="flex-grow flex flex-col pb-28 overflow-y-auto">
+<!-- Header Section -->
+<section class="px-6 pt-6 pb-4">
+<h2 class="text-3xl font-bold text-on-surface mb-1">Mile 12 Market</h2>
+<p class="text-base text-on-surface-variant mb-4">Today, 14 Oct</p>
+<!-- Sync Status -->
+<div class="inline-flex items-center gap-2 px-3 py-1.5 bg-surface-container-low rounded-full border border-surface-variant text-sm text-on-surface-variant w-fit max-w-full">
+<span class="material-symbols-outlined text-[18px]">cloud_off</span>
+<span class="truncate">Saved on this device, will sync when online</span>
+</div>
+</section>
+<!-- Item List -->
+<section class="flex-grow px-4 pb-6">
+<div class="bg-surface-container-lowest rounded-xl border border-surface-variant overflow-hidden shadow-sm">
+<ul class="divide-y divide-surface-variant">
+<!-- List Item 1 -->
+<li class="px-4 py-4 flex items-center justify-between active:bg-surface-container-low transition-colors duration-150">
+<div class="flex flex-col">
+<span class="text-[17px] font-semibold text-on-surface mb-0.5">Tomatoes</span>
+<span class="text-[15px] text-on-surface-variant">1 basket</span>
+</div>
+<div class="text-[17px] font-bold text-on-surface tabular-nums">
+                                ₦45,000
+                            </div>
+</li>
+<!-- List Item 2 -->
+<li class="px-4 py-4 flex items-center justify-between active:bg-surface-container-low transition-colors duration-150">
+<div class="flex flex-col">
+<span class="text-[17px] font-semibold text-on-surface mb-0.5">Onions</span>
+<span class="text-[15px] text-on-surface-variant">1 bag</span>
+</div>
+<div class="text-[17px] font-bold text-on-surface tabular-nums">
+                                ₦32,000
+                            </div>
+</li>
+<!-- List Item 3 -->
+<li class="px-4 py-4 flex items-center justify-between active:bg-surface-container-low transition-colors duration-150">
+<div class="flex flex-col">
+<span class="text-[17px] font-semibold text-on-surface mb-0.5">Palm Oil</span>
+<span class="text-[15px] text-on-surface-variant">25 Litres</span>
+</div>
+<div class="text-[17px] font-bold text-on-surface tabular-nums">
+                                ₦28,500
+                            </div>
+</li>
+<!-- List Item 4 -->
+<li class="px-4 py-4 flex items-center justify-between active:bg-surface-container-low transition-colors duration-150">
+<div class="flex flex-col">
+<span class="text-[17px] font-semibold text-on-surface mb-0.5">Garri (White)</span>
+<span class="text-[15px] text-on-surface-variant">Half bag</span>
+</div>
+<div class="text-[17px] font-bold text-on-surface tabular-nums">
+                                ₦12,000
+                            </div>
+</li>
+<!-- List Item 5 -->
+<li class="px-4 py-4 flex items-center justify-between active:bg-surface-container-low transition-colors duration-150">
+<div class="flex flex-col">
+<span class="text-[17px] font-semibold text-on-surface mb-0.5">Rice (Local)</span>
+<span class="text-[15px] text-on-surface-variant">1 paint bucket</span>
+</div>
+<div class="text-[17px] font-bold text-on-surface tabular-nums">
+                                ₦3,500
+                            </div>
+</li>
+<!-- List Item 6 -->
+<li class="px-4 py-4 flex items-center justify-between active:bg-surface-container-low transition-colors duration-150">
+<div class="flex flex-col">
+<span class="text-[17px] font-semibold text-on-surface mb-0.5">Stockfish (Cut)</span>
+<span class="text-[15px] text-on-surface-variant">1 heap</span>
+</div>
+<div class="text-[17px] font-bold text-on-surface tabular-nums">
+                                ₦5,000
+                            </div>
+</li>
+<!-- List Item 7 -->
+<li class="px-4 py-4 flex items-center justify-between active:bg-surface-container-low transition-colors duration-150">
+<div class="flex flex-col">
+<span class="text-[17px] font-semibold text-on-surface mb-0.5">Crayfish</span>
+<span class="text-[15px] text-on-surface-variant">1 paint bucket</span>
+</div>
+<div class="text-[17px] font-bold text-on-surface tabular-nums">
+                                ₦2,500
+                            </div>
+</li>
+<!-- List Item 8 -->
+<li class="px-4 py-4 flex items-center justify-between active:bg-surface-container-low transition-colors duration-150">
+<div class="flex flex-col">
+<span class="text-[17px] font-semibold text-on-surface mb-0.5">Salt</span>
+<span class="text-[15px] text-on-surface-variant">2 packets</span>
+</div>
+<div class="text-[17px] font-bold text-on-surface tabular-nums">
+                                ₦2,000
+                            </div>
+</li>
+</ul>
+</div>
+</section>
+</main>
+<!-- Footer Total -->
+<div class="fixed bottom-0 w-full max-w-[430px] z-20 bg-surface-container-lowest border-t border-surface-variant px-6 py-5 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+<div class="flex items-center justify-between">
+<span class="text-lg font-semibold text-on-surface-variant">Trip Total</span>
+<span class="text-2xl font-bold text-primary tabular-nums">₦130,500</span>
+</div>
+</div>
+</div>
+</body></html>
+
+<!-- Onboarding: Minimalist Direction -->
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MarketPulse - Market prices, tracked by you</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed": "#c8e6ff",
+                        "tertiary-fixed-dim": "#f8bb6a",
+                        "background": "#f8f9fd",
+                        "surface-variant": "#e1e2e6",
+                        "outline-variant": "#c0c7cf",
+                        "on-tertiary-container": "#ffe5c8",
+                        "surface-tint": "#1a648c",
+                        "primary-container": "#2a6f97",
+                        "surface": "#f8f9fd",
+                        "on-secondary": "#ffffff",
+                        "outline": "#71787f",
+                        "secondary-container": "#cbe3f7",
+                        "on-background": "#191c1f",
+                        "surface-bright": "#f8f9fd",
+                        "on-primary-container": "#d7ecff",
+                        "on-primary-fixed": "#001e2f",
+                        "secondary-fixed-dim": "#b2c9dd",
+                        "inverse-on-surface": "#eff1f4",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface": "#191c1f",
+                        "on-secondary-container": "#4f6576",
+                        "tertiary": "#714800",
+                        "surface-container-low": "#f2f3f7",
+                        "surface-container-highest": "#e1e2e6",
+                        "error-container": "#ffdad6",
+                        "on-error-container": "#93000a",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-container": "#8e5f15",
+                        "surface-container": "#eceef1",
+                        "secondary": "#4b6172",
+                        "surface-dim": "#d8dade",
+                        "on-surface-variant": "#40484e",
+                        "on-tertiary-fixed": "#2a1800",
+                        "primary": "#00567c",
+                        "on-tertiary-fixed-variant": "#643f00",
+                        "primary-fixed-dim": "#8fcefa",
+                        "on-secondary-fixed": "#051e2c",
+                        "tertiary-fixed": "#ffddb5",
+                        "inverse-surface": "#2e3134",
+                        "inverse-primary": "#8fcefa",
+                        "on-secondary-fixed-variant": "#334959",
+                        "secondary-fixed": "#cee5f9",
+                        "error": "#ba1a1a",
+                        "surface-container-high": "#e7e8ec",
+                        "on-primary-fixed-variant": "#004c6e",
+                        "on-primary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "display": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col items-center">
+<!-- Screen 1: Welcome -->
+<div class="w-full max-w-md min-h-screen flex flex-col relative overflow-hidden bg-surface">
+<!-- TopAppBar (Transactional - Hidden/Modified for Onboarding) -->
+<header class="w-full top-0 sticky bg-surface flat no shadows flex items-center justify-between px-4 h-16 w-full max-w-md mx-auto z-10">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="analytics">analytics</span>
+<span class="text-primary font-headline font-bold text-xl">MarketPulse</span>
+</div>
+</header>
+<main class="flex-1 flex flex-col items-center justify-center px-6 py-12 z-10 relative">
+<!-- Illustration Placeholder inspired by attached image -->
+<div class="mb-12 w-48 h-48 rounded-full bg-surface-container-low flex items-center justify-center relative shadow-sm">
+<div class="absolute inset-0 rounded-full overflow-hidden">
+<img class="object-cover w-full h-full opacity-90 mix-blend-multiply" data-alt="A clean, minimalist vector illustration representing an open market scene. Soft, muted colors: mustard yellow, burnt orange, olive green, and dark brown. Simple geometric shapes forming market stalls, a shopping basket, and overlapping suns/circles in the background. Inspired by mid-century modern design. Warm, clear, light mode aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAujOJZ7Y3O9RW_JtIM8hqxHk_mrdmnDh5yk1Q1-EdR7tT1i9Dg5x3Ye7ftqqhd-v_9ytmCuAmWlTbIzqiiPzKdmiP5rWY2k8z9piH33HDY_SfHfZ_JSlS4RUz47nKDlLTp2myVCU8Gxfi36i-1T0pV0ZICOy6P-xsaNoqkIHRUZtu2vlfGszSvSF_-UhctBh5THXLf25JuYwYHKsTdIHG5vlfnkdhCMRtL0Ip3a0LCW0U9rYWnj0A3aw"/>
+</div>
+<div class="absolute inset-0 bg-surface/20 rounded-full"></div>
+</div>
+<div class="text-center max-w-sm mb-12">
+<h1 class="font-headline font-bold text-3xl mb-4 text-on-surface">Market prices, <br/>tracked by you.</h1>
+<p class="font-body text-base text-on-surface-variant leading-relaxed">
+                    Join thousands of Nigerian households managing their grocery budgets with real, local data.
+                </p>
+</div>
+<div class="w-full mt-auto space-y-4">
+<button class="w-full bg-primary-container text-on-primary-container font-label font-semibold py-4 px-6 rounded-full active:scale-95 transition-transform flex items-center justify-center gap-2">
+                    Start Logging
+                    <span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</main>
+<!-- Decorative Background Elements -->
+<div class="absolute top-[-10%] right-[-10%] w-64 h-64 bg-tertiary-fixed-dim/20 rounded-full blur-3xl -z-10 pointer-events-none"></div>
+<div class="absolute bottom-[-10%] left-[-10%] w-80 h-80 bg-primary-fixed/30 rounded-full blur-3xl -z-10 pointer-events-none"></div>
+</div>
+</body></html>
+
+<!-- Trip Detail - MarketPulse -->
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Trip Details - MarketPulse</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed": "#cee5f9",
+                        "on-error": "#ffffff",
+                        "outline-variant": "#c0c7cf",
+                        "inverse-surface": "#2e3134",
+                        "primary": "#00567c",
+                        "on-background": "#191c1f",
+                        "surface-variant": "#e1e2e6",
+                        "on-tertiary-fixed": "#2a1800",
+                        "on-primary-container": "#d7ecff",
+                        "surface-container-highest": "#e1e2e6",
+                        "on-secondary-fixed": "#051e2c",
+                        "on-secondary-fixed-variant": "#334959",
+                        "secondary": "#4b6172",
+                        "on-surface-variant": "#40484e",
+                        "error-container": "#ffdad6",
+                        "surface": "#f8f9fd",
+                        "primary-container": "#2a6f97",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#b2c9dd",
+                        "inverse-primary": "#8fcefa",
+                        "background": "#f8f9fd",
+                        "primary-fixed-dim": "#8fcefa",
+                        "secondary-container": "#cbe3f7",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-high": "#e7e8ec",
+                        "on-secondary": "#ffffff",
+                        "surface-bright": "#f8f9fd",
+                        "on-tertiary-container": "#ffe5c8",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#643f00",
+                        "surface-tint": "#1a648c",
+                        "on-primary-fixed-variant": "#004c6e",
+                        "on-secondary-container": "#4f6576",
+                        "tertiary-fixed": "#ffddb5",
+                        "on-surface": "#191c1f",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed-dim": "#f8bb6a",
+                        "on-primary-fixed": "#001e2f",
+                        "tertiary": "#714800",
+                        "surface-dim": "#d8dade",
+                        "surface-container-low": "#f2f3f7",
+                        "tertiary-container": "#8e5f15",
+                        "surface-container": "#eceef1",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed": "#c8e6ff",
+                        "outline": "#71787f",
+                        "inverse-on-surface": "#eff1f4"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "display": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .tabular-nums { font-variant-numeric: tabular-nums; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col items-center">
+<div class="w-full max-w-[430px] min-h-screen flex flex-col bg-surface shadow-sm relative">
+<!-- TopAppBar -->
+<header class="bg-surface-container-lowest border-b border-outline-variant docked full-width top-0 z-10">
+<div class="flex justify-between items-center w-full px-4 h-16">
+<button aria-label="Back" class="text-on-surface hover:bg-surface-variant/50 p-2 rounded-full transition-colors active:scale-95">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="font-headline text-label-lg font-semibold text-primary dark:text-primary-fixed-dim">Trip Details</h1>
+<button aria-label="Edit" class="text-on-surface hover:bg-surface-variant/50 p-2 rounded-full transition-colors active:scale-95">
+<span class="material-symbols-outlined" data-icon="edit">edit</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 overflow-y-auto pb-24">
+<!-- Header Section -->
+<div class="px-4 py-6 bg-surface-container-lowest mb-2 shadow-sm border-b border-outline-variant/30">
+<div class="flex flex-col gap-1">
+<h2 class="text-2xl font-bold text-on-surface">Mile 12 Market</h2>
+<p class="text-on-surface-variant text-[15px]">Today, 14 Oct</p>
+</div>
+<!-- Sync Status -->
+<div class="mt-4 flex items-center gap-2 bg-surface-container-low px-3 py-2 rounded-lg">
+<span class="material-symbols-outlined text-sm text-outline" data-icon="cloud_off">cloud_off</span>
+<p class="text-sm text-on-surface-variant">Saved on this device, will sync when online</p>
+</div>
+</div>
+<!-- Items List -->
+<div class="px-4 py-4 flex flex-col gap-3">
+<!-- Item Row -->
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/20 shadow-sm flex justify-between items-center">
+<div class="flex flex-col">
+<span class="font-semibold text-[15px] text-on-surface">Tomatoes</span>
+<span class="text-on-surface-variant text-sm">1 basket</span>
+</div>
+<span class="font-bold text-lg text-on-surface tabular-nums">₦12,500</span>
+</div>
+<!-- Item Row -->
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/20 shadow-sm flex justify-between items-center">
+<div class="flex flex-col">
+<span class="font-semibold text-[15px] text-on-surface">Atarodo Pepper</span>
+<span class="text-on-surface-variant text-sm">1/2 basket</span>
+</div>
+<span class="font-bold text-lg text-on-surface tabular-nums">₦6,000</span>
+</div>
+<!-- Item Row -->
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/20 shadow-sm flex justify-between items-center">
+<div class="flex flex-col">
+<span class="font-semibold text-[15px] text-on-surface">Onions</span>
+<span class="text-on-surface-variant text-sm">1 small bag</span>
+</div>
+<span class="font-bold text-lg text-on-surface tabular-nums">₦4,500</span>
+</div>
+<!-- Item Row -->
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/20 shadow-sm flex justify-between items-center">
+<div class="flex flex-col">
+<span class="font-semibold text-[15px] text-on-surface">Palm Oil</span>
+<span class="text-on-surface-variant text-sm">5 litres</span>
+</div>
+<span class="font-bold text-lg text-on-surface tabular-nums">₦5,200</span>
+</div>
+<!-- Item Row -->
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/20 shadow-sm flex justify-between items-center">
+<div class="flex flex-col">
+<span class="font-semibold text-[15px] text-on-surface">Vegetable Oil</span>
+<span class="text-on-surface-variant text-sm">3 litres</span>
+</div>
+<span class="font-bold text-lg text-on-surface tabular-nums">₦3,600</span>
+</div>
+<!-- Item Row -->
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/20 shadow-sm flex justify-between items-center">
+<div class="flex flex-col">
+<span class="font-semibold text-[15px] text-on-surface">Garri</span>
+<span class="text-on-surface-variant text-sm">1 paint bucket</span>
+</div>
+<span class="font-bold text-lg text-on-surface tabular-nums">₦1,800</span>
+</div>
+<!-- Item Row -->
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/20 shadow-sm flex justify-between items-center">
+<div class="flex flex-col">
+<span class="font-semibold text-[15px] text-on-surface">Egusi</span>
+<span class="text-on-surface-variant text-sm">4 cups (peeled)</span>
+</div>
+<span class="font-bold text-lg text-on-surface tabular-nums">₦2,400</span>
+</div>
+<!-- Item Row -->
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/20 shadow-sm flex justify-between items-center">
+<div class="flex flex-col">
+<span class="font-semibold text-[15px] text-on-surface">Stockfish</span>
+<span class="text-on-surface-variant text-sm">3 medium cuts</span>
+</div>
+<span class="font-bold text-lg text-on-surface tabular-nums">₦8,500</span>
+</div>
+</div>
+</main>
+<!-- Footer Total -->
+<div class="fixed bottom-0 w-full max-w-[430px] bg-surface-container-lowest border-t border-outline-variant/50 p-4 pb-6 z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+<div class="flex justify-between items-end">
+<div class="flex flex-col">
+<span class="text-sm text-on-surface-variant">Trip Total</span>
+<span class="text-xs text-outline mt-1">8 items</span>
+</div>
+<span class="text-2xl font-bold text-primary-container tabular-nums">₦44,500</span>
+</div>
+</div>
+</div>
+</body></html>
+
+<!-- Trip Detail - MarketPulse -->
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Trip Detail - MarketPulse</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-error": "#ffffff",
+                      "inverse-primary": "#8fcefa",
+                      "on-secondary-fixed": "#051e2c",
+                      "on-error-container": "#93000a",
+                      "on-background": "#191c1f",
+                      "error": "#ba1a1a",
+                      "outline-variant": "#c0c7cf",
+                      "secondary-fixed": "#cee5f9",
+                      "tertiary-fixed-dim": "#f8bb6a",
+                      "surface-container": "#eceef1",
+                      "primary-container": "#2a6f97",
+                      "on-primary-fixed": "#001e2f",
+                      "primary-fixed": "#c8e6ff",
+                      "on-secondary": "#ffffff",
+                      "surface-variant": "#e1e2e6",
+                      "on-tertiary-fixed-variant": "#643f00",
+                      "tertiary": "#714800",
+                      "on-tertiary-fixed": "#2a1800",
+                      "outline": "#71787f",
+                      "secondary-container": "#cbe3f7",
+                      "inverse-surface": "#2e3134",
+                      "on-primary": "#ffffff",
+                      "on-surface-variant": "#40484e",
+                      "surface-container-highest": "#e1e2e6",
+                      "on-primary-container": "#d7ecff",
+                      "surface-dim": "#d8dade",
+                      "primary-fixed-dim": "#8fcefa",
+                      "on-surface": "#191c1f",
+                      "on-secondary-fixed-variant": "#334959",
+                      "on-primary-fixed-variant": "#004c6e",
+                      "error-container": "#ffdad6",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-container-low": "#f2f3f7",
+                      "secondary-fixed-dim": "#b2c9dd",
+                      "tertiary-container": "#8e5f15",
+                      "on-tertiary": "#ffffff",
+                      "surface-tint": "#1a648c",
+                      "surface-container-high": "#e7e8ec",
+                      "on-secondary-container": "#4f6576",
+                      "surface-bright": "#f8f9fd",
+                      "primary": "#00567c",
+                      "secondary": "#4b6172",
+                      "tertiary-fixed": "#ffddb5",
+                      "background": "#f8f9fd",
+                      "inverse-on-surface": "#eff1f4",
+                      "surface": "#f8f9fd",
+                      "on-tertiary-container": "#ffe5c8"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {},
+              "fontFamily": {
+                      "headline": [
+                              "Inter"
+                      ],
+                      "display": [
+                              "Inter"
+                      ],
+                      "body": [
+                              "Inter"
+                      ],
+                      "label": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {}
+      },
+          },
+        }
+      </script>
+<style>
+          body {
+              font-family: 'Inter', sans-serif;
+          }
+      </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface h-full flex justify-center bg-surface-container-low">
+<!-- Mobile Viewport Container -->
+<div class="w-full max-w-md h-full flex flex-col bg-surface relative shadow-xl">
+<!-- Header Section -->
+<header class="bg-surface sticky top-0 z-10 px-4 py-4 pb-2">
+<div class="flex justify-between items-start mb-1">
+<button aria-label="Go back" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-variant transition-colors text-on-surface-variant -ml-2">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<button aria-label="Edit trip" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-variant transition-colors text-primary -mr-2">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</div>
+<div class="mt-2">
+<h1 class="font-headline font-bold text-2xl text-on-surface tracking-tight leading-tight">Mile 12 Market</h1>
+<p class="font-body text-[15px] text-on-surface-variant mt-1">Today, 14 Oct</p>
+</div>
+<!-- Sync Status -->
+<div class="flex items-center gap-2 mt-4 bg-surface-container py-2 px-3 rounded-lg text-on-surface-variant">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">cloud_off</span>
+<span class="font-body text-sm">Saved on this device, will sync when online</span>
+</div>
+</header>
+<!-- Main Content (List) -->
+<main class="flex-1 overflow-y-auto px-4 py-2 pb-32">
+<div class="space-y-4 mt-2">
+<!-- Item 1 -->
+<div class="flex justify-between items-end border-b border-surface-variant/50 pb-3">
+<div>
+<h2 class="font-body font-semibold text-[16px] text-on-surface">Tomatoes</h2>
+<p class="font-body text-[15px] text-on-surface-variant mt-0.5">1 basket</p>
+</div>
+<div class="text-right">
+<span class="font-headline font-bold text-[18px] tabular-nums text-on-surface">₦45,000</span>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="flex justify-between items-end border-b border-surface-variant/50 pb-3">
+<div>
+<h2 class="font-body font-semibold text-[16px] text-on-surface">Atarodo Pepper</h2>
+<p class="font-body text-[15px] text-on-surface-variant mt-0.5">Half basket</p>
+</div>
+<div class="text-right">
+<span class="font-headline font-bold text-[18px] tabular-nums text-on-surface">₦18,500</span>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="flex justify-between items-end border-b border-surface-variant/50 pb-3">
+<div>
+<h2 class="font-body font-semibold text-[16px] text-on-surface">Onions</h2>
+<p class="font-body text-[15px] text-on-surface-variant mt-0.5">1 bag</p>
+</div>
+<div class="text-right">
+<span class="font-headline font-bold text-[18px] tabular-nums text-on-surface">₦32,000</span>
+</div>
+</div>
+<!-- Item 4 -->
+<div class="flex justify-between items-end border-b border-surface-variant/50 pb-3">
+<div>
+<h2 class="font-body font-semibold text-[16px] text-on-surface">Palm Oil</h2>
+<p class="font-body text-[15px] text-on-surface-variant mt-0.5">5 liters</p>
+</div>
+<div class="text-right">
+<span class="font-headline font-bold text-[18px] tabular-nums text-on-surface">₦7,500</span>
+</div>
+</div>
+<!-- Item 5 -->
+<div class="flex justify-between items-end border-b border-surface-variant/50 pb-3">
+<div>
+<h2 class="font-body font-semibold text-[16px] text-on-surface">Vegetable Oil</h2>
+<p class="font-body text-[15px] text-on-surface-variant mt-0.5">5 liters</p>
+</div>
+<div class="text-right">
+<span class="font-headline font-bold text-[18px] tabular-nums text-on-surface">₦8,200</span>
+</div>
+</div>
+<!-- Item 6 -->
+<div class="flex justify-between items-end border-b border-surface-variant/50 pb-3">
+<div>
+<h2 class="font-body font-semibold text-[16px] text-on-surface">Garri (White)</h2>
+<p class="font-body text-[15px] text-on-surface-variant mt-0.5">1 paint bucket</p>
+</div>
+<div class="text-right">
+<span class="font-headline font-bold text-[18px] tabular-nums text-on-surface">₦2,500</span>
+</div>
+</div>
+<!-- Item 7 -->
+<div class="flex justify-between items-end border-b border-surface-variant/50 pb-3">
+<div>
+<h2 class="font-body font-semibold text-[16px] text-on-surface">Egusi (Melon)</h2>
+<p class="font-body text-[15px] text-on-surface-variant mt-0.5">4 derica</p>
+</div>
+<div class="text-right">
+<span class="font-headline font-bold text-[18px] tabular-nums text-on-surface">₦4,800</span>
+</div>
+</div>
+<!-- Item 8 -->
+<div class="flex justify-between items-end pb-3">
+<div>
+<h2 class="font-body font-semibold text-[16px] text-on-surface">Stockfish (Okporoko)</h2>
+<p class="font-body text-[15px] text-on-surface-variant mt-0.5">3 medium cuts</p>
+</div>
+<div class="text-right">
+<span class="font-headline font-bold text-[18px] tabular-nums text-on-surface">₦12,000</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer Total -->
+<div class="absolute bottom-0 w-full bg-surface shadow-[0_-4px_20px_rgba(0,0,0,0.05)] border-t border-surface-variant/30">
+<div class="px-6 py-6 flex justify-between items-center">
+<span class="font-body font-semibold text-[16px] text-on-surface-variant">Trip Total</span>
+<span class="font-headline font-bold text-3xl text-primary tabular-nums tracking-tight">₦130,500</span>
+</div>
+</div>
+</div>
+</body></html>
+
+<!-- Item Pending Review - MarketPulse -->
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Item Pending Review - MarketPulse</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed-variant": "#334959",
+                        "tertiary": "#714800",
+                        "tertiary-fixed-dim": "#f8bb6a",
+                        "surface-container": "#eceef1",
+                        "outline": "#71787f",
+                        "tertiary-container": "#8e5f15",
+                        "inverse-surface": "#2e3134",
+                        "secondary-container": "#cbe3f7",
+                        "primary": "#00567c",
+                        "surface-variant": "#e1e2e6",
+                        "surface-container-low": "#f2f3f7",
+                        "on-secondary-fixed": "#051e2c",
+                        "primary-container": "#2a6f97",
+                        "on-surface": "#191c1f",
+                        "surface-tint": "#1a648c",
+                        "on-secondary-container": "#4f6576",
+                        "surface-dim": "#d8dade",
+                        "inverse-on-surface": "#eff1f4",
+                        "on-background": "#191c1f",
+                        "secondary-fixed-dim": "#b2c9dd",
+                        "secondary-fixed": "#cee5f9",
+                        "surface": "#f8f9fd",
+                        "inverse-primary": "#8fcefa",
+                        "on-tertiary-container": "#ffe5c8",
+                        "on-primary-container": "#d7ecff",
+                        "on-tertiary": "#ffffff",
+                        "on-surface-variant": "#40484e",
+                        "on-primary-fixed-variant": "#004c6e",
+                        "on-tertiary-fixed": "#2a1800",
+                        "primary-fixed": "#c8e6ff",
+                        "on-error": "#ffffff",
+                        "outline-variant": "#c0c7cf",
+                        "primary-fixed-dim": "#8fcefa",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed": "#001e2f",
+                        "surface-bright": "#f8f9fd",
+                        "on-error-container": "#93000a",
+                        "error": "#ba1a1a",
+                        "surface-container-highest": "#e1e2e6",
+                        "background": "#f8f9fd",
+                        "error-container": "#ffdad6",
+                        "secondary": "#4b6172",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "tertiary-fixed": "#ffddb5",
+                        "surface-container-high": "#e7e8ec",
+                        "on-tertiary-fixed-variant": "#643f00"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "display": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body min-h-screen flex flex-col justify-center items-center px-4 py-8 antialiased md:bg-surface-container-low">
+<!-- Top App Bar (Suppressed for transactional screen) -->
+<!-- Main Content Canvas -->
+<main class="w-full max-w-[430px] bg-surface rounded-[24px] shadow-sm flex flex-col items-center pt-12 pb-8 px-6 text-center space-y-8 md:shadow-lg md:border md:border-outline-variant">
+<!-- Icon Section -->
+<div class="relative w-24 h-24 flex items-center justify-center bg-secondary-container rounded-full mb-2">
+<span class="material-symbols-outlined text-[48px] text-primary" style="font-variation-settings: 'FILL' 1;">
+                pending_actions
+            </span>
+<!-- Decorative accent dots -->
+<div class="absolute -top-1 -right-1 w-4 h-4 bg-primary-container rounded-full animate-pulse"></div>
+</div>
+<!-- Text Content -->
+<div class="space-y-3">
+<h1 class="font-headline text-2xl font-bold text-on-surface tracking-tight">
+                We're adding this soon
+            </h1>
+<p class="text-on-surface-variant text-[15px] leading-relaxed max-w-[300px] mx-auto">
+                Our team is reviewing this item to ensure price accuracy. It's usually added within a day or two.
+            </p>
+</div>
+<!-- Raw Entry Card (Reassurance) -->
+<div class="w-full bg-surface-container-low rounded-2xl p-4 border border-outline-variant text-left mt-2 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]">
+<div class="flex items-center space-x-3 mb-1">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">
+                    receipt_long
+                </span>
+<span class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
+                    Raw Entry Captured
+                </span>
+</div>
+<div class="mt-2 pl-[30px]">
+<p class="font-semibold text-on-surface text-lg">Specialist Local Rice - 5kg</p>
+<p class="text-on-surface-variant text-sm mt-1">Entered 2 mins ago</p>
+</div>
+</div>
+<!-- Actions -->
+<div class="w-full flex flex-col space-y-4 pt-4 mt-auto">
+<button class="w-full bg-primary-container hover:bg-surface-tint active:scale-[0.98] transition-all duration-200 text-on-primary-container font-semibold text-[17px] py-4 rounded-xl flex items-center justify-center shadow-sm">
+<span>Continue Trip</span>
+<span class="material-symbols-outlined ml-2 text-[20px]">
+                    arrow_forward
+                </span>
+</button>
+<button class="w-full bg-transparent hover:bg-surface-container active:bg-surface-container-high transition-colors duration-200 text-primary font-semibold text-[15px] py-3 rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined mr-2 text-[18px]">
+                    edit
+                </span>
+<span>Edit entry</span>
+</button>
+</div>
+</main>
+<!-- Bottom Nav Bar (Suppressed for transactional screen) -->
+</body></html>
+
+<!-- Confirm and Correct - MarketPulse -->
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+<title>MarketPulse - Confirm and Correct</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-bright": "#f8f9fd",
+                        "tertiary": "#714800",
+                        "on-secondary-fixed-variant": "#334959",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#cee5f9",
+                        "surface-container-highest": "#e1e2e6",
+                        "primary": "#00567c",
+                        "surface-container-low": "#f2f3f7",
+                        "primary-fixed-dim": "#8fcefa",
+                        "on-tertiary-fixed-variant": "#643f00",
+                        "on-secondary-fixed": "#051e2c",
+                        "on-background": "#191c1f",
+                        "primary-container": "#2a6f97",
+                        "on-primary-fixed": "#001e2f",
+                        "on-error": "#ffffff",
+                        "secondary-container": "#cbe3f7",
+                        "inverse-primary": "#8fcefa",
+                        "on-primary": "#ffffff",
+                        "outline-variant": "#c0c7cf",
+                        "tertiary-fixed-dim": "#f8bb6a",
+                        "on-surface-variant": "#40484e",
+                        "surface-tint": "#1a648c",
+                        "on-tertiary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "on-primary-fixed-variant": "#004c6e",
+                        "error-container": "#ffdad6",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-container": "#d7ecff",
+                        "on-secondary-container": "#4f6576",
+                        "on-tertiary-fixed": "#2a1800",
+                        "on-surface": "#191c1f",
+                        "inverse-on-surface": "#eff1f4",
+                        "surface": "#f8f9fd",
+                        "surface-container-high": "#e7e8ec",
+                        "surface-container": "#eceef1",
+                        "tertiary-fixed": "#ffddb5",
+                        "background": "#f8f9fd",
+                        "tertiary-container": "#8e5f15",
+                        "secondary-fixed-dim": "#b2c9dd",
+                        "surface-variant": "#e1e2e6",
+                        "surface-dim": "#d8dade",
+                        "outline": "#71787f",
+                        "primary-fixed": "#c8e6ff",
+                        "on-tertiary-container": "#ffe5c8",
+                        "on-secondary": "#ffffff",
+                        "inverse-surface": "#2e3134",
+                        "secondary": "#4b6172"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter", "sans-serif"],
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .icon-fill { font-variation-settings: 'FILL' 1; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-24 md:pb-0">
+<!-- Top Navigation / Header -->
+<header class="bg-surface-bright dark:bg-surface-dim text-primary dark:text-primary-fixed-dim font-body text-body-lg font-semibold w-full top-0 sticky bg-surface-bright dark:bg-surface-dim shadow-sm shadow-sm flex justify-between items-center px-4 h-16 w-full max-w-md mx-auto z-40">
+<button class="p-2 -ml-2 rounded-full hover:bg-surface-container-low active:scale-95 duration-100 transition-colors flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div class="flex-1 px-4 text-xl font-bold text-primary dark:text-primary-fixed-dim text-center truncate">
+            Review Trip
+        </div>
+<button class="p-2 -mr-2 rounded-full hover:bg-surface-container-low active:scale-95 duration-100 transition-colors flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</header>
+<main class="w-full max-w-md mx-auto px-4 pt-4 space-y-4">
+<!-- Info Banner -->
+<div class="bg-secondary-container text-on-secondary-container p-4 rounded-xl flex gap-3 items-start shadow-sm">
+<span class="material-symbols-outlined text-secondary shrink-0 mt-0.5 icon-fill">info</span>
+<p class="font-body text-sm leading-relaxed">
+                Please review your extracted items. Tap any row to edit details or correct amounts.
+            </p>
+</div>
+<!-- Meta Information Edit -->
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-sm space-y-4 border border-surface-variant">
+<div class="flex justify-between items-center group cursor-pointer active:scale-[0.99] transition-transform">
+<div>
+<p class="text-xs font-label text-on-surface-variant uppercase tracking-wider mb-1">Market</p>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl">location_on</span>
+<p class="font-headline font-semibold text-lg text-on-surface">Mile 12 Market</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">edit</span>
+</div>
+<hr class="border-surface-variant">
+<div class="flex justify-between items-center group cursor-pointer active:scale-[0.99] transition-transform">
+<div>
+<p class="text-xs font-label text-on-surface-variant uppercase tracking-wider mb-1">Date</p>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl">calendar_today</span>
+<p class="font-headline font-semibold text-lg text-on-surface">Today, 14 Oct</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">edit</span>
+</div>
+</div>
+<!-- Grocery List -->
+<div class="space-y-3 pb-8">
+<h2 class="font-headline font-semibold text-on-surface px-1">Extracted Items (8)</h2>
+<!-- Tomatoes (History) -->
+<button class="w-full text-left bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-surface-variant flex flex-col gap-2 active:bg-surface-container-low transition-colors">
+<div class="flex justify-between items-start w-full">
+<div class="flex flex-col">
+<span class="font-body font-semibold text-on-surface text-base">Tomatoes</span>
+<span class="font-label text-sm text-on-surface-variant">4kg</span>
+</div>
+<span class="font-headline font-bold text-on-surface text-lg tabular-nums">₦2,400</span>
+</div>
+<div class="flex items-center gap-1.5 text-xs font-label text-secondary bg-surface-container px-2 py-1 rounded-md self-start">
+<span class="material-symbols-outlined text-[14px]">history</span>
+                    You paid ₦2,100 on 4 Aug
+                </div>
+</button>
+<!-- Atarodo Pepper (Crowd) -->
+<button class="w-full text-left bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-surface-variant flex flex-col gap-2 active:bg-surface-container-low transition-colors">
+<div class="flex justify-between items-start w-full">
+<div class="flex flex-col">
+<span class="font-body font-semibold text-on-surface text-base">Atarodo Pepper</span>
+<span class="font-label text-sm text-on-surface-variant">1 bag</span>
+</div>
+<span class="font-headline font-bold text-on-surface text-lg tabular-nums">₦1,500</span>
+</div>
+<div class="flex items-center gap-1.5 text-xs font-label text-primary bg-primary-fixed rounded-md px-2 py-1 self-start">
+<span class="material-symbols-outlined text-[14px]">groups</span>
+                    Others at Mile 12 paid ₦1,400–₦1,600 · 8 reports
+                </div>
+</button>
+<!-- Onions (Unsure) -->
+<button class="w-full text-left bg-error-container/30 rounded-xl p-4 shadow-sm border border-error/30 flex flex-col gap-2 active:bg-error-container/50 transition-colors relative overflow-hidden">
+<div class="absolute top-0 right-0 w-2 h-full bg-error/50"></div>
+<div class="flex justify-between items-start w-full">
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-body font-semibold text-on-surface text-base">Onions</span>
+<span class="bg-error text-on-error text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide">Unsure</span>
+</div>
+<span class="font-label text-sm text-on-surface-variant">1 basket</span>
+</div>
+<span class="font-headline font-bold text-on-surface text-lg tabular-nums">₦3,000</span>
+</div>
+<div class="flex items-center gap-1.5 text-xs font-label text-on-error-container bg-error-container px-2 py-1 rounded-md self-start">
+<span class="material-symbols-outlined text-[14px]">help</span>
+                    Tap to verify amount
+                </div>
+</button>
+<!-- Rice (Outlier) -->
+<button class="w-full text-left bg-tertiary-fixed/30 rounded-xl p-4 shadow-sm border border-tertiary-fixed-dim flex flex-col gap-2 active:bg-tertiary-fixed/50 transition-colors">
+<div class="flex justify-between items-start w-full">
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-body font-semibold text-on-surface text-base">Rice</span>
+<span class="bg-tertiary text-on-tertiary text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide">Check This</span>
+</div>
+<span class="font-label text-sm text-on-surface-variant">5kg</span>
+</div>
+<span class="font-headline font-bold text-on-surface text-lg tabular-nums">₦12,500</span>
+</div>
+<div class="flex items-center gap-1.5 text-xs font-label text-on-tertiary-container bg-tertiary-container/10 px-2 py-1 rounded-md self-start">
+<span class="material-symbols-outlined text-[14px]">warning</span>
+                    Seems higher than usual
+                </div>
+</button>
+<!-- Garri -->
+<button class="w-full text-left bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-surface-variant flex justify-between items-center active:bg-surface-container-low transition-colors">
+<div class="flex flex-col">
+<span class="font-body font-semibold text-on-surface text-base">Garri</span>
+<span class="font-label text-sm text-on-surface-variant">1 paint</span>
+</div>
+<span class="font-headline font-bold text-on-surface text-lg tabular-nums">₦1,200</span>
+</button>
+<!-- Palm Oil -->
+<button class="w-full text-left bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-surface-variant flex justify-between items-center active:bg-surface-container-low transition-colors">
+<div class="flex flex-col">
+<span class="font-body font-semibold text-on-surface text-base">Palm Oil</span>
+<span class="font-label text-sm text-on-surface-variant">1L</span>
+</div>
+<span class="font-headline font-bold text-on-surface text-lg tabular-nums">₦1,000</span>
+</button>
+<!-- Frozen Chicken -->
+<button class="w-full text-left bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-surface-variant flex justify-between items-center active:bg-surface-container-low transition-colors">
+<div class="flex flex-col">
+<span class="font-body font-semibold text-on-surface text-base">Frozen Chicken</span>
+<span class="font-label text-sm text-on-surface-variant">1kg</span>
+</div>
+<span class="font-headline font-bold text-on-surface text-lg tabular-nums">₦2,800</span>
+</button>
+<!-- Beans (History) -->
+<button class="w-full text-left bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-surface-variant flex flex-col gap-2 active:bg-surface-container-low transition-colors">
+<div class="flex justify-between items-start w-full">
+<div class="flex flex-col">
+<span class="font-body font-semibold text-on-surface text-base">Beans</span>
+<span class="font-label text-sm text-on-surface-variant">2kg</span>
+</div>
+<span class="font-headline font-bold text-on-surface text-lg tabular-nums">₦1,800</span>
+</div>
+<div class="flex items-center gap-1.5 text-xs font-label text-secondary bg-surface-container px-2 py-1 rounded-md self-start">
+<span class="material-symbols-outlined text-[14px]">history</span>
+                    You paid ₦1,750 on 20 Sep
+                </div>
+</button>
+<!-- Add Item Button -->
+<button class="w-full py-4 border-2 border-dashed border-outline-variant rounded-xl text-primary font-semibold flex items-center justify-center gap-2 hover:bg-primary-fixed/20 active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined">add</span>
+                Add missing item
+            </button>
+</div>
+</main>
+<!-- Floating Action Footer -->
+<div class="fixed bottom-0 left-0 right-0 bg-surface-bright dark:bg-surface-dim border-t border-surface-variant shadow-[0_-4px_20px_rgba(0,0,0,0.05)] pb-safe pt-4 px-4 pb-6 z-50">
+<div class="max-w-md mx-auto flex flex-col gap-4">
+<div class="flex justify-between items-end px-2">
+<span class="font-body text-on-surface-variant">Trip Total</span>
+<span class="font-headline font-bold text-2xl text-on-surface tabular-nums">₦25,100</span>
+</div>
+<button class="w-full bg-primary text-on-primary font-bold text-lg py-4 rounded-full flex items-center justify-center gap-2 shadow-md active:scale-[0.98] active:bg-primary/90 transition-all">
+<span class="material-symbols-outlined icon-fill">check_circle</span>
+                Confirm and save
+            </button>
+</div>
+</div>
+</body></html>
+
+<!-- Price Map - Nigeria (National) -->
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>MarketPulse - Price Map</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS Config (Verbatim from prompt) -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "error-container": "#ffdad6",
+                    "secondary-fixed-dim": "#b2c9dd",
+                    "tertiary-fixed": "#ffddb5",
+                    "primary-fixed-dim": "#8fcefa",
+                    "primary": "#00567c",
+                    "surface-dim": "#d8dade",
+                    "on-secondary-fixed": "#051e2c",
+                    "on-error-container": "#93000a",
+                    "surface-bright": "#f8f9fd",
+                    "background": "#f8f9fd",
+                    "surface": "#f8f9fd",
+                    "surface-tint": "#1a648c",
+                    "tertiary-fixed-dim": "#f8bb6a",
+                    "on-surface": "#191c1f",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary-fixed-variant": "#334959",
+                    "on-primary-fixed": "#001e2f",
+                    "on-surface-variant": "#40484e",
+                    "on-tertiary-fixed-variant": "#643f00",
+                    "secondary-fixed": "#cee5f9",
+                    "on-primary-container": "#d7ecff",
+                    "on-tertiary-container": "#ffe5c8",
+                    "on-primary-fixed-variant": "#004c6e",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-container": "#8e5f15",
+                    "surface-container-highest": "#e1e2e6",
+                    "inverse-primary": "#8fcefa",
+                    "outline": "#71787f",
+                    "surface-container": "#eceef1",
+                    "on-secondary": "#ffffff",
+                    "primary-container": "#2a6f97",
+                    "on-primary": "#ffffff",
+                    "outline-variant": "#c0c7cf",
+                    "tertiary": "#714800",
+                    "surface-container-high": "#e7e8ec",
+                    "on-tertiary-fixed": "#2a1800",
+                    "primary-fixed": "#c8e6ff",
+                    "inverse-surface": "#2e3134",
+                    "secondary-container": "#cbe3f7",
+                    "on-secondary-container": "#4f6576",
+                    "surface-container-low": "#f2f3f7",
+                    "on-error": "#ffffff",
+                    "inverse-on-surface": "#eff1f4",
+                    "error": "#ba1a1a",
+                    "surface-variant": "#e1e2e6",
+                    "secondary": "#4b6172",
+                    "on-background": "#191c1f"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {},
+            "fontFamily": {
+                    "headline": [
+                            "Inter", "sans-serif"
+                    ],
+                    "display": [
+                            "Inter", "sans-serif"
+                    ],
+                    "body": [
+                            "Inter", "sans-serif"
+                    ],
+                    "label": [
+                            "Inter", "sans-serif"
+                    ]
+            },
+            "fontSize": {}
+          },
+        },
+      }
+    </script>
+<style>
+        /* Hatched pattern for thin data */
+        .pattern-hatched {
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.1) 5px, rgba(0,0,0,0.1) 10px);
+        }
+        /* Dot pattern for no data */
+        .pattern-dots {
+            background-image: radial-gradient(rgba(0,0,0,0.15) 2px, transparent 2px);
+            background-size: 8px 8px;
+        }
+        
+        /* Map specific semantic colors (strict adherence to rules) */
+        .map-down-strong { fill: #2e7d32; } /* Green for price down */
+        .map-down-mild { fill: #81c784; }
+        .map-up-mild { fill: #ffb74d; }
+        .map-up-strong { fill: #c62828; } /* Red for price up */
+        .map-no-data { fill: #e1e2e6; }
+        .map-thin-data { fill: #cbe3f7; } /* Secondary container as base for thin data hatching overlay logic applied in SVG or CSS */
+        
+        /* SVG path interactions */
+        .state-path {
+            transition: all 0.2s ease-in-out;
+            stroke: #ffffff;
+            stroke-width: 1;
+            cursor: pointer;
+        }
+        .state-path:hover {
+            filter: brightness(0.9);
+            stroke: #191c1f;
+            stroke-width: 1.5;
+        }
+        
+        body { font-family: 'Inter', sans-serif; }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky z-40 bg-surface border-b border-outline-variant flex justify-between items-center px-4 py-2 flat no shadows">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">analytics</span>
+<h1 class="text-xl font-bold text-primary font-headline tracking-tight">MarketPulse</h1>
+</div>
+<button class="p-2 rounded-full hover:bg-surface-container-high transition-colors active:scale-95 duration-150 flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">search</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow flex flex-col relative w-full max-w-md mx-auto h-[calc(100vh-60px-80px)]">
+<!-- Commodity Picker -->
+<div class="w-full px-4 py-4 z-10 flex flex-col items-center">
+<p class="text-xs font-label text-on-surface-variant mb-1 uppercase tracking-wider">National Average</p>
+<button class="flex items-center gap-2 bg-surface-container-lowest px-6 py-3 rounded-full shadow-md border border-surface-container-high active:scale-95 transition-transform">
+<div class="w-8 h-8 rounded-full bg-error-container flex items-center justify-center overflow-hidden">
+<!-- Representing tomatoes -->
+<img class="w-full h-full object-cover" data-alt="A macro photography style close-up of a perfectly ripe, vibrant red tomato on a clean white background. High key lighting creates bright, clean reflections on the smooth skin. The aesthetic is modern, appetizing, and fits a polished light-mode UI design. 8k resolution, photorealistic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvAPDE31Q1ciKBG-GBcPf6NGWSuOWARkJQEmqIn_X4PyN1wPiAn64mPemdGAT8pIF0GRWBCd05FXAY6WHHwiJk6wcvOchlPQnJWy0VNiBzZFkkhYYzPCnZ6cyu0A3Xm41uaWcIm5qVEg-GTiaehps5IlIyMeB-GkhGOwB4oj4aowFUg9qHwSo_XnSt3s4LIUgTD2ICzoPFLOR2sc19mPvKPtg7cllrHWqaLZ1quqs-pRtzK8aIU5Sw5ILk2uqTpKv7lHi7HlhP0QEh">
+</div>
+<span class="font-headline font-bold text-lg text-on-surface">Tomatoes</span>
+<span class="material-symbols-outlined text-primary">expand_more</span>
+</button>
+<div class="mt-2 flex items-center gap-1 text-on-surface">
+<span class="font-display font-bold text-2xl">₦3,250</span>
+<span class="text-sm text-on-surface-variant">/basket</span>
+</div>
+<div class="flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[16px]" style="color: #c62828; font-variation-settings: 'FILL' 1;">arrow_upward</span>
+<span class="text-sm font-semibold" style="color: #c62828;">+4.2%</span>
+<span class="text-xs text-on-surface-variant ml-2">from last month</span>
+</div>
+<p class="text-[10px] text-on-surface-variant mt-2 font-label">Based on 4,120 reports in the last 7 days</p>
+</div>
+<!-- The Map Area -->
+<div class="flex-grow relative w-full flex flex-col items-center justify-center px-2 overflow-hidden -mt-4">
+<!-- Abstract Map Representation (Using styled divs to simulate choropleth for demo purposes without complex SVG path data) -->
+<div class="relative w-full aspect-square max-w-[340px] opacity-90 transition-opacity">
+<!-- Simulating Nigeria Map with simplified geometric shapes representing regions -->
+<!-- North West (Thin Data) -->
+<div class="absolute top-[10%] left-[20%] w-[35%] h-[30%] rounded-[2rem] rounded-tl-[4rem] map-up-mild pattern-hatched border-2 border-surface flex items-center justify-center active:scale-95 transition-transform" style="background-color: #ffb74d;">
+<span class="text-xs font-bold text-on-surface bg-surface-container-lowest/80 px-1 rounded shadow-sm">Kano</span>
+</div>
+<!-- North East (No Data) -->
+<div class="absolute top-[15%] right-[10%] w-[35%] h-[35%] rounded-[3rem] rounded-tr-[5rem] map-no-data pattern-dots border-2 border-surface flex items-center justify-center active:scale-95 transition-transform">
+<span class="text-xs text-on-surface-variant bg-surface/50 px-1 rounded">Borno</span>
+</div>
+<!-- Middle Belt -->
+<div class="absolute top-[42%] left-[30%] w-[40%] h-[25%] rounded-[1.5rem] map-down-mild border-2 border-surface flex items-center justify-center active:scale-95 transition-transform" style="background-color: #81c784;">
+<span class="text-xs font-bold text-on-surface bg-surface-container-lowest/80 px-1 rounded shadow-sm">Abuja</span>
+</div>
+<!-- South West (Strong Data) -->
+<div class="absolute bottom-[15%] left-[10%] w-[25%] h-[25%] rounded-full rounded-br-[1rem] map-down-strong border-2 border-surface flex items-center justify-center active:scale-95 transition-transform shadow-lg z-10" style="background-color: #2e7d32;">
+<span class="text-sm font-bold text-on-tertiary shadow-sm drop-shadow">Lagos</span>
+</div>
+<!-- South East / South South -->
+<div class="absolute bottom-[10%] right-[30%] w-[30%] h-[25%] rounded-full map-up-strong border-2 border-surface flex items-center justify-center active:scale-95 transition-transform" style="background-color: #c62828;">
+<span class="text-xs font-bold text-on-tertiary shadow-sm drop-shadow">Rivers</span>
+</div>
+</div>
+<!-- Legend -->
+<div class="absolute bottom-[80px] w-full px-6 flex flex-col items-center gap-2">
+<div class="w-full h-2 rounded-full flex overflow-hidden border border-outline-variant/30">
+<div class="h-full w-1/5" style="background-color: #2e7d32;"></div> <!-- Down Strong -->
+<div class="h-full w-1/5" style="background-color: #81c784;"></div> <!-- Down Mild -->
+<div class="h-full w-1/5 bg-surface-variant flex"></div> <!-- Neutral/Flat -->
+<div class="h-full w-1/5" style="background-color: #ffb74d;"></div> <!-- Up Mild -->
+<div class="h-full w-1/5" style="background-color: #c62828;"></div> <!-- Up Strong -->
+</div>
+<div class="w-full flex justify-between text-[10px] font-label text-on-surface-variant px-1">
+<span>Prices fell (-10%)</span>
+<span>No change</span>
+<span>Prices rose (+10%)</span>
+</div>
+<!-- Data Quality Key -->
+<div class="flex gap-4 mt-2 text-[10px] font-label text-on-surface-variant">
+<div class="flex items-center gap-1">
+<div class="w-3 h-3 rounded-sm bg-secondary pattern-hatched"></div>
+<span>Low reports</span>
+</div>
+<div class="flex items-center gap-1">
+<div class="w-3 h-3 rounded-sm bg-surface-variant pattern-dots"></div>
+<span>No data</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Sheet Peek Hint -->
+<div class="absolute bottom-0 w-full bg-surface-container-lowest rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)] border-t border-outline-variant/20 pt-3 pb-8 px-4 flex flex-col items-center cursor-pointer hover:bg-surface-bright transition-colors">
+<div class="w-12 h-1.5 bg-outline-variant/50 rounded-full mb-3"></div>
+<p class="text-sm font-semibold text-primary">Tap a state to see local prices</p>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-safe bg-surface-container shadow-[0_-2px_10px_rgba(0,0,0,0.05)] rounded-t-xl hidden md:flex md:hidden">
+<!-- Render Navigation based on JSON rule: BottomNav is for Mobile. "Price Map" is active -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all active:scale-90 duration-200">
+<span class="material-symbols-outlined mb-1">home</span>
+<span class="font-label text-xs">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-5 py-1 active:scale-90 duration-200">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">map</span>
+<span class="font-label text-xs font-semibold">Price Map</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all active:scale-90 duration-200">
+<span class="material-symbols-outlined mb-1">edit_note</span>
+<span class="font-label text-xs">My Log</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all active:scale-90 duration-200">
+<span class="material-symbols-outlined mb-1">assessment</span>
+<span class="font-label text-xs">Reports</span>
+</button>
+</nav>
+<!-- Mobile specific bottom nav structural fix for the requested design layout (overriding the md:hidden above for mobile first rendering as per instructions) -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-safe bg-surface-container-lowest shadow-[0_-2px_10px_rgba(0,0,0,0.05)] rounded-t-xl md:hidden">
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all active:scale-90 duration-200">
+<span class="material-symbols-outlined mb-1">home</span>
+<span class="font-label text-[10px]">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-5 py-1 active:scale-90 duration-200">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">map</span>
+<span class="font-label text-[10px] font-semibold mt-0.5">Price Map</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all active:scale-90 duration-200">
+<span class="material-symbols-outlined mb-1">edit_note</span>
+<span class="font-label text-[10px]">My Log</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all active:scale-90 duration-200">
+<span class="material-symbols-outlined mb-1">assessment</span>
+<span class="font-label text-[10px]">Reports</span>
+</button>
+</nav>
+</body></html>
+
+<!-- MarketPulse - Desktop Landing Page (Updated) -->
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>MarketPulse - Track what you actually pay for groceries</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "surface-container-high": "#e7e8ec",
+                "surface-container-lowest": "#ffffff",
+                "surface-container-highest": "#e1e2e6",
+                "tertiary-fixed-dim": "#f8bb6a",
+                "on-tertiary-container": "#ffe5c8",
+                "on-primary-container": "#d7ecff",
+                "inverse-on-surface": "#eff1f4",
+                "on-primary-fixed-variant": "#004c6e",
+                "surface": "#f8f9fd",
+                "on-secondary-fixed": "#051e2c",
+                "on-secondary": "#ffffff",
+                "secondary-fixed": "#cee5f9",
+                "background": "#f8f9fd",
+                "secondary-container": "#cbe3f7",
+                "tertiary-fixed": "#ffddb5",
+                "on-surface": "#191c1f",
+                "surface-container": "#eceef1",
+                "primary-fixed": "#c8e6ff",
+                "surface-variant": "#e1e2e6",
+                "on-background": "#191c1f",
+                "surface-tint": "#1a648c",
+                "surface-container-low": "#f2f3f7",
+                "on-error": "#ffffff",
+                "error-container": "#ffdad6",
+                "primary-container": "#2a6f97",
+                "surface-dim": "#d8dade",
+                "on-secondary-fixed-variant": "#334959",
+                "surface-bright": "#f8f9fd",
+                "primary": "#00567c",
+                "primary-fixed-dim": "#8fcefa",
+                "secondary": "#4b6172",
+                "on-tertiary-fixed": "#2a1800",
+                "on-primary": "#ffffff",
+                "tertiary-container": "#8e5f15",
+                "on-secondary-container": "#4f6576",
+                "on-primary-fixed": "#001e2f",
+                "on-error-container": "#93000a",
+                "on-tertiary": "#ffffff",
+                "on-tertiary-fixed-variant": "#643f00",
+                "secondary-fixed-dim": "#b2c9dd",
+                "inverse-surface": "#2e3134",
+                "error": "#ba1a1a",
+                "on-surface-variant": "#40484e",
+                "inverse-primary": "#8fcefa",
+                "tertiary": "#714800",
+                "outline": "#71787f",
+                "outline-variant": "#c0c7cf"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+        },
+        "spacing": {},
+        "fontFamily": {
+                "headline": [
+                        "Inter"
+                ],
+                "display": [
+                        "Inter"
+                ],
+                "body": [
+                        "Inter"
+                ],
+                "label": [
+                        "Inter"
+                ]
+        },
+        "fontSize": {}
+},
+    },
+  }
+</script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hero-clip {
+            clip-path: polygon(0 0, 100% 0, 100% 90%, 0 100%);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body antialiased min-h-screen flex flex-col selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopNavBar -->
+<nav class="bg-surface/80 backdrop-blur-md border-b border-outline-variant w-full top-0 sticky z-50">
+<div class="flex justify-between items-center max-w-7xl mx-auto px-6 h-16">
+<div class="text-xl font-bold text-primary">MarketPulse</div>
+<div class="hidden md:flex gap-8 items-center font-body text-label-md font-semibold">
+<a class="text-primary font-bold border-b-2 border-primary pb-1 opacity-80 transition-opacity" href="#how-it-works">How it Works</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#prices">Prices</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#our-data">Our Data</a>
+</div>
+<button class="bg-primary text-on-primary px-5 py-2.5 rounded-lg font-semibold hover:bg-surface-tint transition-colors">Open MarketPulse</button>
+</div>
+</nav>
+<main class="flex-grow">
+<!-- Hero Section -->
+<section class="relative w-full min-h-[90vh] flex items-center justify-center pt-16 pb-32 overflow-hidden bg-surface-container-low hero-clip">
+<!-- Shader Background -->
+
+<div class="relative z-10 max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+<div class="flex flex-col gap-6 max-w-2xl">
+<h1 class="font-headline text-5xl md:text-6xl font-black text-on-surface leading-[1.1] tracking-tight">
+                        Track what you <span class="text-primary">actually pay</span> for groceries.
+                    </h1>
+<p class="text-lg md:text-xl text-on-surface-variant font-body leading-relaxed max-w-xl">
+                        See real prices from open markets and supermarkets. Know when prices go up, and understand exactly why your food budget moved this week. No jargon, just facts.
+                    </p>
+<div class="flex flex-col sm:flex-row gap-4 pt-4">
+<button class="bg-primary text-on-primary px-8 py-4 rounded-lg font-semibold text-lg hover:bg-surface-tint transition-colors flex items-center justify-center gap-2">
+                            Log your last shop
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'wght' 600;">arrow_forward</span>
+</button>
+<button class="bg-surface text-primary border-2 border-outline px-8 py-4 rounded-lg font-semibold text-lg hover:bg-surface-container hover:border-primary transition-colors flex items-center justify-center gap-2">
+                            Just show me prices
+                        </button>
+</div>
+<p class="text-sm text-on-surface-variant mt-2 opacity-80">Free forever for personal household use.</p>
+</div>
+<div class="relative w-full aspect-[1.79] max-w-3xl mx-auto lg:mx-0 rounded-lg overflow-hidden border-4 border-surface-container-highest/50 transform rotate-1 hover:rotate-0 transition-transform duration-500">
+<div class="absolute inset-0 bg-gradient-to-tr from-primary/10 to-transparent z-10 mix-blend-overlay"></div>
+<img alt="MarketPulse App Showcase" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMKuBatECVLhC2aIhfmpGjeZq8HSXBSnBj0dSFtMNV5SMr8tEna75vNpm8luiDSdQk05eLePtCKa2Ek3GG-x84mEO7Ywc2scOzfG_szd8iBllAnNgkHV3ovEMojaRBqPzKE8R6ZNyLDc2O711YZdkAgMltRmsjq1pNBk2Pc8a3YBq6ZyMjOlPccb6k7VtKmxNVp-v81SmTxr-EE6Eg8nisMRH4ltAxZZDTwl0_DON2jDM3FK7flY8ynw">
+</div>
+</div>
+</section>
+<!-- Bento Grid: How it Works -->
+<section class="py-24 bg-surface max-w-7xl mx-auto px-6" id="how-it-works">
+<div class="text-center mb-16 max-w-3xl mx-auto">
+<h2 class="font-headline text-3xl md:text-4xl font-bold text-on-surface mb-4">How MarketPulse works</h2>
+<p class="text-lg text-on-surface-variant">Built for the reality of Nigerian markets. Simple, fast, and driven by real shoppers.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[minmax(300px,_auto)]">
+<!-- Card 1 -->
+<div class="bg-surface-container-low rounded-lg p-8 flex flex-col gap-4 relative overflow-hidden group hover:bg-surface-container transition-colors md:col-span-2">
+<div class="w-14 h-14 bg-primary-container text-on-primary-container rounded-lg flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">receipt_long</span>
+</div>
+<h3 class="text-2xl font-bold text-on-surface">Log your market runs</h3>
+<p class="text-on-surface-variant leading-relaxed text-lg max-w-md z-10">
+                        Just type in what you paid at Mile 12, Wuse Market, or Shoprite. We keep your history organised so you always know your baseline.
+                    </p>
+<div class="absolute right-0 bottom-0 w-64 h-64 bg-[url('placeholder')] bg-cover bg-left-top opacity-30 group-hover:opacity-50 transition-opacity rounded-tl-lg mix-blend-multiply pointer-events-none" data-alt="A stylized, flat-vector illustration of a Nigerian market receipt printed on thermal paper, overlaid with simple bar charts showing price trends. Warm neutral background with steel blue accents. Minimalist tech-aesthetic."></div>
+</div>
+<!-- Card 2 -->
+<div class="bg-tertiary-container/10 border border-outline-variant/30 rounded-lg p-8 flex flex-col gap-4 relative overflow-hidden group hover:bg-tertiary-container/20 transition-colors">
+<div class="w-14 h-14 bg-tertiary text-on-tertiary rounded-lg flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">trending_up</span>
+</div>
+<h3 class="text-xl font-bold text-on-surface">Spot the trends</h3>
+<p class="text-on-surface-variant leading-relaxed">
+                        Prices went up? We'll show you exactly how much compared to last month.
+                    </p>
+<div class="mt-auto bg-surface-container-lowest p-4 rounded-lg border border-outline-variant flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-xs text-on-surface-variant font-semibold">Gari (White) - 1 Paint Rubber</span>
+<span class="text-xl font-black text-on-surface tabular-nums tracking-tight">₦2,500</span>
+</div>
+<div class="flex items-center gap-1 text-error bg-error-container/50 px-2 py-1 rounded-md">
+<span class="material-symbols-outlined text-[16px]">arrow_upward</span>
+<span class="text-sm font-bold tabular-nums">₦300</span>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-high rounded-lg p-8 flex flex-col gap-4 relative overflow-hidden group">
+<div class="w-14 h-14 bg-secondary-container text-on-secondary-container rounded-lg flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">groups</span>
+</div>
+<h3 class="text-xl font-bold text-on-surface">Crowd-verified</h3>
+<p class="text-on-surface-variant leading-relaxed">
+                        Every price comes from someone who actually paid it — never estimates, never averages dressed up as facts.
+                    </p>
+</div>
+<!-- Card 4 -->
+<div class="bg-primary/5 border border-primary/20 rounded-lg p-8 flex flex-col gap-4 relative overflow-hidden group hover:bg-primary/10 transition-colors md:col-span-2">
+<div class="flex flex-col md:flex-row justify-between items-start gap-8">
+<div>
+<div class="w-14 h-14 bg-primary text-on-primary rounded-lg flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">pie_chart</span>
+</div>
+<h3 class="text-2xl font-bold text-on-surface">Understand your budget</h3>
+<p class="text-on-surface-variant leading-relaxed text-lg max-w-sm mt-2">
+                                Stop wondering where the money went. See clear breakdowns of your food spend by category over time.
+                            </p>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-lg border border-outline-variant flex flex-col gap-4 w-full md:w-auto">
+<div class="flex items-center justify-between gap-8 border-b border-outline-variant pb-2">
+<span class="text-sm text-on-surface-variant font-semibold">Prices rose</span>
+<span class="text-lg font-bold text-error tabular-nums">₦9,200</span>
+</div>
+<div class="flex items-center justify-between gap-8">
+<span class="text-sm text-on-surface-variant font-semibold">You bought differently</span>
+<span class="text-lg font-bold text-primary tabular-nums">₦3,100</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-highest w-full py-12 border-t border-outline-variant">
+<div class="max-w-7xl mx-auto flex flex-col items-center justify-center gap-6 text-center px-4">
+<div class="text-md font-bold text-on-surface tracking-tight">MarketPulse</div>
+<div class="flex gap-6 font-body text-label-sm">
+<a class="text-on-surface-variant hover:text-on-surface transition-opacity opacity-90 hover:opacity-100" href="#">Privacy Policy</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-opacity opacity-90 hover:opacity-100" href="#">Terms of Service</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-opacity opacity-90 hover:opacity-100" href="#">Contact Support</a>
+</div>
+<p class="text-on-surface-variant font-body text-label-sm mt-4 opacity-70">
+                © 2026 MarketPulse Nigeria. Built from real receipts, not estimates.
+            </p>
+</div>
+</footer>
+</body></html>
+
+<!-- Trip Detail - MarketPulse -->
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+<title>MarketPulse - Trip Detail</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-lowest": "#ffffff",
+                        "primary": "#00567c",
+                        "primary-container": "#2a6f97",
+                        "on-primary-container": "#d7ecff",
+                        "tertiary-fixed": "#ffddb5",
+                        "on-error": "#ffffff",
+                        "surface-variant": "#e1e2e6",
+                        "outline-variant": "#c0c7cf",
+                        "inverse-surface": "#2e3134",
+                        "primary-fixed-dim": "#8fcefa",
+                        "background": "#f8f9fd",
+                        "surface-bright": "#f8f9fd",
+                        "secondary-fixed": "#cee5f9",
+                        "on-primary-fixed-variant": "#004c6e",
+                        "secondary-container": "#cbe3f7",
+                        "on-surface-variant": "#40484e",
+                        "on-background": "#191c1f",
+                        "on-tertiary-fixed-variant": "#643f00",
+                        "inverse-primary": "#8fcefa",
+                        "on-secondary-fixed": "#051e2c",
+                        "surface": "#f8f9fd",
+                        "secondary-fixed-dim": "#b2c9dd",
+                        "on-tertiary-fixed": "#2a1800",
+                        "on-error-container": "#93000a",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed-variant": "#334959",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-container": "#4f6576",
+                        "error": "#ba1a1a",
+                        "secondary": "#4b6172",
+                        "surface-container-high": "#e7e8ec",
+                        "surface-container": "#eceef1",
+                        "primary-fixed": "#c8e6ff",
+                        "surface-container-highest": "#e1e2e6",
+                        "on-tertiary-container": "#ffe5c8",
+                        "surface-container-low": "#f2f3f7",
+                        "surface-dim": "#d8dade",
+                        "tertiary-container": "#8e5f15",
+                        "tertiary": "#714800",
+                        "on-secondary": "#ffffff",
+                        "outline": "#71787f",
+                        "on-primary": "#ffffff",
+                        "inverse-on-surface": "#eff1f4",
+                        "on-primary-fixed": "#001e2f",
+                        "tertiary-fixed-dim": "#f8bb6a",
+                        "on-surface": "#191c1f",
+                        "surface-tint": "#1a648c"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter", "sans-serif"],
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .tabular-nums { font-variant-numeric: tabular-nums; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body antialiased min-h-screen flex justify-center">
+<div class="w-full max-w-md bg-surface-container-lowest flex flex-col min-h-screen relative shadow-lg">
+<!-- TopAppBar -->
+<header class="docked full-width top-0 bg-surface-container-lowest border-b border-outline-variant flat no shadows flex justify-between items-center w-full px-4 h-16 z-10 sticky top-0">
+<button class="text-on-surface-variant hover:bg-surface-variant/50 transition-colors active:scale-95 transition-transform p-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<div class="text-xl font-bold text-primary dark:text-primary-fixed-dim">
+                Trip Details
+            </div>
+<button class="text-on-surface-variant hover:bg-surface-variant/50 transition-colors active:scale-95 transition-transform p-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="edit">edit</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow flex flex-col pb-24 overflow-y-auto">
+<!-- Page Header -->
+<div class="px-5 pt-6 pb-4">
+<h1 class="text-2xl font-bold font-headline text-on-background">Mile 12 Market</h1>
+<p class="text-base text-on-surface-variant mt-1">Today, 14 Oct</p>
+</div>
+<!-- Sync Status Banner -->
+<div class="px-5 pb-6">
+<div class="bg-surface-container flex items-center px-3 py-2 rounded-lg text-sm text-on-surface-variant gap-2">
+<span class="material-symbols-outlined text-lg" data-icon="cloud_off">cloud_off</span>
+<span>Saved on this device, will sync when online</span>
+</div>
+</div>
+<!-- Item List -->
+<div class="px-5 flex flex-col gap-4">
+<!-- Item 1 -->
+<div class="flex justify-between items-center py-2 border-b border-surface-container-high last:border-0">
+<div class="flex flex-col">
+<span class="text-[15px] font-semibold text-on-surface">Tomatoes</span>
+<span class="text-sm text-on-surface-variant">1 basket</span>
+</div>
+<div class="text-[17px] font-bold text-on-background tabular-nums">₦45,000</div>
+</div>
+<!-- Item 2 -->
+<div class="flex justify-between items-center py-2 border-b border-surface-container-high last:border-0">
+<div class="flex flex-col">
+<span class="text-[15px] font-semibold text-on-surface">Atarodo Pepper</span>
+<span class="text-sm text-on-surface-variant">Half basket</span>
+</div>
+<div class="text-[17px] font-bold text-on-background tabular-nums">₦18,500</div>
+</div>
+<!-- Item 3 -->
+<div class="flex justify-between items-center py-2 border-b border-surface-container-high last:border-0">
+<div class="flex flex-col">
+<span class="text-[15px] font-semibold text-on-surface">Onions</span>
+<span class="text-sm text-on-surface-variant">1 bag</span>
+</div>
+<div class="text-[17px] font-bold text-on-background tabular-nums">₦32,000</div>
+</div>
+<!-- Item 4 -->
+<div class="flex justify-between items-center py-2 border-b border-surface-container-high last:border-0">
+<div class="flex flex-col">
+<span class="text-[15px] font-semibold text-on-surface">Palm Oil</span>
+<span class="text-sm text-on-surface-variant">5 liters</span>
+</div>
+<div class="text-[17px] font-bold text-on-background tabular-nums">₦7,500</div>
+</div>
+<!-- Item 5 -->
+<div class="flex justify-between items-center py-2 border-b border-surface-container-high last:border-0">
+<div class="flex flex-col">
+<span class="text-[15px] font-semibold text-on-surface">Vegetable Oil</span>
+<span class="text-sm text-on-surface-variant">5 liters</span>
+</div>
+<div class="text-[17px] font-bold text-on-background tabular-nums">₦8,200</div>
+</div>
+<!-- Item 6 -->
+<div class="flex justify-between items-center py-2 border-b border-surface-container-high last:border-0">
+<div class="flex flex-col">
+<span class="text-[15px] font-semibold text-on-surface">Garri (White)</span>
+<span class="text-sm text-on-surface-variant">1 paint bucket</span>
+</div>
+<div class="text-[17px] font-bold text-on-background tabular-nums">₦2,500</div>
+</div>
+<!-- Item 7 -->
+<div class="flex justify-between items-center py-2 border-b border-surface-container-high last:border-0">
+<div class="flex flex-col">
+<span class="text-[15px] font-semibold text-on-surface">Egusi (Melon)</span>
+<span class="text-sm text-on-surface-variant">4 derica</span>
+</div>
+<div class="text-[17px] font-bold text-on-background tabular-nums">₦4,800</div>
+</div>
+<!-- Item 8 -->
+<div class="flex justify-between items-center py-2 border-b border-surface-container-high last:border-0">
+<div class="flex flex-col">
+<span class="text-[15px] font-semibold text-on-surface">Stockfish (Okporoko)</span>
+<span class="text-sm text-on-surface-variant">3 medium cuts</span>
+</div>
+<div class="text-[17px] font-bold text-on-background tabular-nums">₦12,000</div>
+</div>
+</div>
+</main>
+<!-- Footer Dock -->
+<div class="fixed bottom-0 w-full max-w-md bg-surface-container-lowest border-t border-outline-variant px-5 py-4 flex justify-between items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
+<span class="text-base font-semibold text-on-surface-variant">Trip Total</span>
+<span class="text-2xl font-bold font-headline text-primary tabular-nums">₦130,500</span>
+</div>
+</div>
+</body></html>
+
+<!-- Onboarding: Supportive Direction -->
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MarketPulse - Track Grocery Prices</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed": "#c8e6ff",
+                        "tertiary-fixed-dim": "#f8bb6a",
+                        "background": "#f8f9fd",
+                        "surface-variant": "#e1e2e6",
+                        "outline-variant": "#c0c7cf",
+                        "on-tertiary-container": "#ffe5c8",
+                        "surface-tint": "#1a648c",
+                        "primary-container": "#2a6f97",
+                        "surface": "#f8f9fd",
+                        "on-secondary": "#ffffff",
+                        "outline": "#71787f",
+                        "secondary-container": "#cbe3f7",
+                        "on-background": "#191c1f",
+                        "surface-bright": "#f8f9fd",
+                        "on-primary-container": "#d7ecff",
+                        "on-primary-fixed": "#001e2f",
+                        "secondary-fixed-dim": "#b2c9dd",
+                        "inverse-on-surface": "#eff1f4",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface": "#191c1f",
+                        "on-secondary-container": "#4f6576",
+                        "tertiary": "#714800",
+                        "surface-container-low": "#f2f3f7",
+                        "surface-container-highest": "#e1e2e6",
+                        "error-container": "#ffdad6",
+                        "on-error-container": "#93000a",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-container": "#8e5f15",
+                        "surface-container": "#eceef1",
+                        "secondary": "#4b6172",
+                        "surface-dim": "#d8dade",
+                        "on-surface-variant": "#40484e",
+                        "on-tertiary-fixed": "#2a1800",
+                        "primary": "#00567c",
+                        "on-tertiary-fixed-variant": "#643f00",
+                        "primary-fixed-dim": "#8fcefa",
+                        "on-secondary-fixed": "#051e2c",
+                        "tertiary-fixed": "#ffddb5",
+                        "inverse-surface": "#2e3134",
+                        "inverse-primary": "#8fcefa",
+                        "on-secondary-fixed-variant": "#334959",
+                        "secondary-fixed": "#cee5f9",
+                        "error": "#ba1a1a",
+                        "surface-container-high": "#e7e8ec",
+                        "on-primary-fixed-variant": "#004c6e",
+                        "on-primary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter", "sans-serif"],
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body antialiased selection:bg-primary-container selection:text-on-primary-container min-h-screen flex flex-col justify-between">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky bg-surface dark:bg-surface-container flat no shadows z-40">
+<div class="flex items-center justify-between px-4 h-16 w-full max-w-md mx-auto">
+<button aria-label="Menu" class="text-primary dark:text-primary-fixed-dim hover:bg-surface-container-low transition-colors rounded-full p-2 active:scale-95 transition-transform">
+<span aria-hidden="true" class="material-symbols-outlined" data-icon="analytics">analytics</span>
+</button>
+<h1 class="text-primary dark:text-primary-fixed-dim font-headline font-bold text-xl tracking-tight">MarketPulse</h1>
+<div class="w-10"></div> <!-- Spacer for center alignment -->
+</div>
+</header>
+<main class="w-full max-w-md mx-auto flex-1 pb-24 pt-4 px-4 flex flex-col gap-10">
+<!-- Screen 1: Welcome -->
+<section class="flex flex-col items-center text-center gap-6 animate-fade-in-up">
+<div class="w-64 h-64 rounded-full bg-surface-container-low flex items-center justify-center overflow-hidden mb-2 shadow-sm border border-outline-variant/20">
+<img alt="Illustration of open market stalls with warm, geometric shapes" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1Vj8o1SpL4iK2kQyPdNRZkizhUnOrlrGYX5FJJ2b3TEbG_VVZKm3Kp2IN3yOVu7YJMS3ykTT4hhEc0HmggTcM8yiiREYgqJNMH6JReroys4TrmJAy0YNz1VNMolDG7Z-Yo5fr8jjC_7cwKRitc32B6BmxCyEyutosZJkiDab9neY6nM8dIihZOteUgHo3dw0pB51pK81gKGykrQtjWcKSHC8dvIFPcqvZl7tov6f-aB8Nf24_70Trk8boGB"/>
+</div>
+<h2 class="font-headline font-bold text-3xl text-on-surface leading-tight px-2">
+                Track what you actually pay at the market.
+            </h2>
+<p class="text-on-surface-variant text-base px-4 font-body leading-relaxed max-w-sm">
+                Join thousands of Nigerian households managing their grocery budgets smarter.
+            </p>
+<button class="w-full bg-primary text-on-primary font-label font-bold text-lg py-4 rounded-full mt-2 shadow-md hover:bg-on-primary-fixed-variant transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+<span class="material-symbols-outlined" data-weight="fill">add_shopping_cart</span>
+                Log your last shop
+            </button>
+</section>
+<!-- Divider -->
+<div class="h-px bg-outline-variant/30 w-full my-4"></div>
+<!-- Screen 2: Location Setup -->
+<section class="flex flex-col gap-5">
+<div>
+<h3 class="font-headline font-semibold text-xl text-on-surface mb-1">Where do you shop?</h3>
+<p class="text-sm text-on-surface-variant">We'll compare prices in your area.</p>
+</div>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl py-3 pl-12 pr-4 text-on-surface font-body placeholder:text-outline focus:border-primary focus:ring-1 focus:ring-primary transition-all" placeholder="Search markets (e.g. Mile 12)" type="text"/>
+</div>
+<div class="flex flex-wrap gap-2">
+<button class="bg-secondary-container text-on-secondary-container font-medium text-sm py-2 px-4 rounded-full border border-secondary-container/50 hover:bg-secondary-fixed transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">location_on</span>
+                    Lagos
+                </button>
+<button class="bg-surface-container text-on-surface-variant font-medium text-sm py-2 px-4 rounded-full border border-outline-variant/50 hover:bg-surface-container-high transition-colors">
+                    Ikeja
+                </button>
+<button class="bg-surface-container text-on-surface-variant font-medium text-sm py-2 px-4 rounded-full border border-outline-variant/50 hover:bg-surface-container-high transition-colors">
+                    Mushin
+                </button>
+</div>
+</section>
+<!-- Screen 3: Capture Choice -->
+<section class="flex flex-col gap-4 mt-4">
+<h3 class="font-headline font-semibold text-lg text-on-surface">How would you like to log?</h3>
+<div class="grid grid-cols-2 gap-3">
+<button class="flex flex-col items-center justify-center gap-3 bg-surface-container-lowest border border-outline-variant/40 rounded-xl p-5 hover:border-primary/50 hover:bg-surface-container-low transition-all active:scale-[0.98] shadow-sm">
+<div class="w-12 h-12 bg-primary-container/20 rounded-full flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-3xl">receipt_long</span>
+</div>
+<span class="font-semibold text-on-surface">Snap receipt</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-3 bg-surface-container-lowest border border-outline-variant/40 rounded-xl p-5 hover:border-primary/50 hover:bg-surface-container-low transition-all active:scale-[0.98] shadow-sm">
+<div class="w-12 h-12 bg-tertiary-container/20 rounded-full flex items-center justify-center text-tertiary-container">
+<span class="material-symbols-outlined text-3xl">edit_square</span>
+</div>
+<span class="font-semibold text-on-surface">Type items</span>
+</button>
+</div>
+</section>
+<!-- Screen 4: First Insight (Bento Grid Style) -->
+<section class="flex flex-col gap-4 mt-6 bg-surface-container-low p-5 rounded-2xl border border-outline-variant/20 shadow-sm relative overflow-hidden">
+<!-- Decorative background element -->
+<div class="absolute -top-10 -right-10 w-32 h-32 bg-primary-container/10 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex items-start justify-between relative z-10">
+<div>
+<span class="text-xs font-semibold text-primary uppercase tracking-wider mb-1 block">Market Insight</span>
+<h3 class="font-headline font-bold text-2xl text-on-surface">Your list cost <span class="text-primary tabular-nums">₦18,400</span></h3>
+</div>
+<div class="w-10 h-10 bg-primary-container rounded-full flex items-center justify-center text-on-primary-container shrink-0 shadow-sm">
+<span class="material-symbols-outlined" data-weight="fill">lightbulb</span>
+</div>
+</div>
+<p class="text-sm text-on-surface-variant font-medium bg-surface-container-lowest p-3 rounded-lg border border-outline-variant/30 leading-snug">
+                At <span class="font-bold text-on-surface">Mushin Market</span>, the same items averaged <span class="font-bold text-on-surface tabular-nums">₦16,900</span> last week.
+            </p>
+<div class="flex flex-col gap-2 mt-2">
+<p class="text-xs font-semibold text-outline uppercase tracking-wider mb-1">Notable differences</p>
+<!-- Commodity Card 1 -->
+<div class="flex items-center justify-between bg-surface-container-lowest p-3 rounded-xl border border-outline-variant/20 shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-surface-variant rounded-lg flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">rice_bowl</span>
+</div>
+<div>
+<p class="font-semibold text-sm text-on-surface">Local Rice (50kg)</p>
+<p class="text-[11px] text-outline flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">group</span> 24 reports this week
+                            </p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold text-sm text-on-surface tabular-nums">₦85,000</p>
+<p class="text-xs font-medium text-[#2e7d32] bg-[#e8f5e9] px-2 py-0.5 rounded flex items-center gap-0.5 justify-end mt-1">
+<span class="material-symbols-outlined text-[12px]">arrow_downward</span> ₦2,000 less
+                        </p>
+</div>
+</div>
+<!-- Commodity Card 2 -->
+<div class="flex items-center justify-between bg-surface-container-lowest p-3 rounded-xl border border-outline-variant/20 shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-surface-variant rounded-lg flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">egg</span>
+</div>
+<div>
+<p class="font-semibold text-sm text-on-surface">Eggs (Crate)</p>
+<p class="text-[11px] text-outline flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">group</span> 18 reports this week
+                            </p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold text-sm text-on-surface tabular-nums">₦3,800</p>
+<p class="text-xs font-medium text-[#c62828] bg-[#ffebee] px-2 py-0.5 rounded flex items-center gap-0.5 justify-end mt-1">
+<span class="material-symbols-outlined text-[12px]">arrow_upward</span> ₦150 more
+                        </p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 py-3 bg-surface dark:bg-surface-container-low border-t border-outline-variant/30 z-50 rounded-t-xl shadow-[0_-2px_10px_rgba(0,0,0,0.05)] shadow-lg md:hidden">
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 hover:bg-secondary-container/50 transition-all active:scale-90 duration-150">
+<span aria-hidden="true" class="material-symbols-outlined mb-1" data-icon="trending_up">trending_up</span>
+<span class="font-label text-xs font-medium tabular-nums">Prices</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 hover:bg-secondary-container/50 transition-all active:scale-90 duration-150">
+<span aria-hidden="true" class="material-symbols-outlined mb-1 text-[28px] text-primary" data-icon="add_circle" data-weight="fill">add_circle</span>
+<span class="font-label text-xs font-medium tabular-nums sr-only">Add Entry</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-5 py-1 hover:bg-secondary-container/50 transition-all active:scale-90 duration-150">
+<span aria-hidden="true" class="material-symbols-outlined mb-1" data-icon="lightbulb" data-weight="fill">lightbulb</span>
+<span class="font-label text-xs font-medium tabular-nums">Insights</span>
+</button>
+</nav>
+</body></html>
+
+<!-- Onboarding: Community Direction -->
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MarketPulse - Community Tracking</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed": "#c8e6ff",
+                        "tertiary-fixed-dim": "#f8bb6a",
+                        "background": "#f8f9fd",
+                        "surface-variant": "#e1e2e6",
+                        "outline-variant": "#c0c7cf",
+                        "on-tertiary-container": "#ffe5c8",
+                        "surface-tint": "#1a648c",
+                        "primary-container": "#2a6f97",
+                        "surface": "#f8f9fd",
+                        "on-secondary": "#ffffff",
+                        "outline": "#71787f",
+                        "secondary-container": "#cbe3f7",
+                        "on-background": "#191c1f",
+                        "surface-bright": "#f8f9fd",
+                        "on-primary-container": "#d7ecff",
+                        "on-primary-fixed": "#001e2f",
+                        "secondary-fixed-dim": "#b2c9dd",
+                        "inverse-on-surface": "#eff1f4",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface": "#191c1f",
+                        "on-secondary-container": "#4f6576",
+                        "tertiary": "#714800",
+                        "surface-container-low": "#f2f3f7",
+                        "surface-container-highest": "#e1e2e6",
+                        "error-container": "#ffdad6",
+                        "on-error-container": "#93000a",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-container": "#8e5f15",
+                        "surface-container": "#eceef1",
+                        "secondary": "#4b6172",
+                        "surface-dim": "#d8dade",
+                        "on-surface-variant": "#40484e",
+                        "on-tertiary-fixed": "#2a1800",
+                        "primary": "#00567c",
+                        "on-tertiary-fixed-variant": "#643f00",
+                        "primary-fixed-dim": "#8fcefa",
+                        "on-secondary-fixed": "#051e2c",
+                        "tertiary-fixed": "#ffddb5",
+                        "inverse-surface": "#2e3134",
+                        "inverse-primary": "#8fcefa",
+                        "on-secondary-fixed-variant": "#334959",
+                        "secondary-fixed": "#cee5f9",
+                        "error": "#ba1a1a",
+                        "surface-container-high": "#e7e8ec",
+                        "on-primary-fixed-variant": "#004c6e",
+                        "on-primary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter", "sans-serif"],
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9fd; color: #191c1f; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background antialiased min-h-screen flex flex-col md:flex-row md:justify-center w-full">
+<div class="w-full max-w-md mx-auto bg-surface min-h-screen relative shadow-sm md:shadow-lg flex flex-col pb-20">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky bg-surface z-40 transition-shadow duration-300" id="top-bar">
+<div class="flex items-center justify-between px-4 h-16 w-full max-w-md mx-auto">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-2xl font-bold" style="font-variation-settings: 'FILL' 1;">analytics</span>
+<h1 class="text-primary font-headline font-bold text-xl tracking-tight">MarketPulse</h1>
+</div>
+<div>
+<button class="p-2 rounded-full hover:bg-surface-container-low transition-colors active:scale-95 text-on-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="flex-1 flex flex-col w-full overflow-y-auto px-4 py-4 space-y-8">
+<!-- Screen 1: Welcome & Community Hook (Hero) -->
+<section class="flex flex-col items-center text-center space-y-6 pt-4 pb-8 border-b border-surface-container-highest/50">
+<div class="w-24 h-24 rounded-full bg-secondary-container flex items-center justify-center mb-2 overflow-hidden shadow-inner relative">
+<!-- Image Style Inspiration from Prompt -->
+<img class="w-full h-full object-cover" data-alt="A stylized, flat vector illustration of an open-air market stall with a striped awning and a woven basket in warm earth tones, soft greens, and golden yellows. The style is minimalist and approachable, evoking a community-driven, friendly atmosphere suitable for an app onboarding experience." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCV7lMoBpXt359bX2oHDqdv5Uf5Fun6RzlAvB_q61UKRBMhebNGosEuojqUP_KXb1IaBc2dF2NGI6V1JcaFJOGxIn3MG8BaLxA5422bFsrh_ChwIAG-9JLxwz0N6sPm1A3mLT0GrjgqAMWBozVU1ukQ3iSdSxLEE6LJU54jPE1bGqI6U174Kn50paVgDtYkDxzt4HFFBEQ4Oht0hyXEsEquyWCxkfhqQluv5dzpIB3US1zvT2itIoBHTA"/>
+</div>
+<div class="space-y-2 max-w-[280px]">
+<h2 class="font-headline text-2xl font-bold text-on-surface leading-tight">Join 4,000+ Nigerian households.</h2>
+<p class="font-body text-[15px] text-on-surface-variant leading-relaxed">Track grocery prices together and help keep our community budget-smart.</p>
+</div>
+<button class="bg-primary-container text-on-primary-container font-label font-semibold text-[15px] px-8 py-3.5 rounded-full shadow-md hover:shadow-lg active:scale-95 transition-all w-full max-w-[240px] flex items-center justify-center gap-2 mt-4">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">add_circle</span>
+                    Log your first shop
+                </button>
+</section>
+<!-- Screen 2: Community Location -->
+<section class="space-y-4">
+<div class="flex items-center justify-between">
+<h3 class="font-headline font-semibold text-lg text-on-surface">Community insights near you</h3>
+<button class="text-primary font-label text-sm font-semibold hover:underline">Change</button>
+</div>
+<div class="bg-surface-container-low rounded-xl p-4 border border-outline-variant/20 shadow-sm flex items-start gap-4">
+<div class="bg-primary-fixed/20 p-2.5 rounded-full text-primary-container mt-1">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">location_on</span>
+</div>
+<div>
+<p class="font-body text-[15px] text-on-surface font-semibold mb-1">See what others are paying in Ikeja</p>
+<p class="font-body text-[13px] text-on-surface-variant mb-3">Prices updated in the last 24 hours.</p>
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1.5 bg-surface rounded-full text-xs font-semibold text-on-surface border border-outline-variant/30 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-primary">storefront</span>
+                                Mile 12 Market
+                            </span>
+<span class="px-3 py-1.5 bg-surface rounded-full text-xs font-semibold text-on-surface border border-outline-variant/30 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-secondary">shopping_cart</span>
+                                Ikeja City Mall
+                            </span>
+</div>
+</div>
+</div>
+</section>
+<!-- Screen 4: Crowd Insight (Bento Style Card) -->
+<section class="space-y-4 pt-4 border-t border-surface-container-highest/50">
+<h3 class="font-headline font-semibold text-lg text-on-surface">Latest Community Pulse</h3>
+<div class="grid grid-cols-1 gap-4">
+<!-- Hero Insight Card -->
+<div class="bg-gradient-to-br from-tertiary-fixed-dim/20 to-surface-container-lowest rounded-xl p-5 shadow-sm border border-tertiary-fixed/30 relative overflow-hidden">
+<div class="absolute top-0 right-0 p-3 opacity-20 pointer-events-none">
+<span class="material-symbols-outlined text-6xl text-tertiary">celebration</span>
+</div>
+<div class="flex items-center gap-2 mb-3">
+<span class="bg-tertiary-container text-on-tertiary px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">Trendsetter</span>
+<span class="text-xs text-on-surface-variant font-medium">Ojota Market</span>
+</div>
+<p class="font-body text-base text-on-surface font-medium leading-snug pr-8 mb-4">
+                            You're the first to track <strong class="font-bold text-tertiary-container">tomatoes</strong> at Ojota today!
+                        </p>
+<div class="bg-surface/80 backdrop-blur-sm rounded-lg p-3 flex flex-col border border-outline-variant/10">
+<span class="text-xs text-on-surface-variant font-medium mb-1">Lagos average (12 reports today)</span>
+<div class="flex items-baseline gap-2">
+<span class="font-headline font-bold text-2xl text-on-surface tabular-nums">₦3,250</span>
+<span class="text-xs text-on-surface-variant">/ basket</span>
+</div>
+</div>
+</div>
+<!-- Secondary Data Card -->
+<div class="bg-surface-container-low rounded-xl p-4 flex items-center justify-between shadow-sm border border-outline-variant/10">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
+<span class="material-symbols-outlined">rice_bowl</span>
+</div>
+<div>
+<p class="font-semibold text-sm text-on-surface">Local Rice</p>
+<p class="text-xs text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">schedule</span> 43 reports this week
+                                </p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold text-on-surface tabular-nums">₦4,500</p>
+<p class="text-[10px] text-error flex items-center justify-end font-medium">
+<span>↑ ₦200</span>
+</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Shared Component styling applied) -->
+<!-- Logic: Intent is community/explore, but since 'Prices' is the closest primary view in the provided JSON, it is set active. However, 'Add Entry' is also highly relevant to the CTA. We will highlight 'Prices' as the base view. -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 py-3 bg-surface border-t border-outline-variant/30 z-50 md:max-w-md md:left-1/2 md:-translate-x-1/2 rounded-t-xl pb-6">
+<!-- Prices (Active based on JSON array index 0 mapping to home/dashboard intent) -->
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-5 py-1 active:scale-90 transition-all duration-150">
+<span class="material-symbols-outlined mb-1 text-[24px]" style="font-variation-settings: 'FILL' 1;">trending_up</span>
+<span class="font-label text-[11px] font-medium tabular-nums">Prices</span>
+</button>
+<!-- Add Entry -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 hover:bg-secondary-container/50 rounded-lg active:scale-90 transition-all duration-150">
+<span class="material-symbols-outlined mb-1 text-[24px]">add_circle</span>
+<span class="font-label text-[11px] font-medium tabular-nums">Add Entry</span>
+</button>
+<!-- Insights -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 hover:bg-secondary-container/50 rounded-lg active:scale-90 transition-all duration-150">
+<span class="material-symbols-outlined mb-1 text-[24px]">lightbulb</span>
+<span class="font-label text-[11px] font-medium tabular-nums">Insights</span>
+</button>
+</nav>
+</div>
+<script>
+        // Simple scroll shadow logic for top bar
+        const topBar = document.getElementById('top-bar');
+        const mainContent = document.querySelector('main');
+
+        mainContent.addEventListener('scroll', () => {
+            if (mainContent.scrollTop > 10) {
+                topBar.classList.add('shadow-md');
+            } else {
+                topBar.classList.remove('shadow-md');
+            }
+        });
+    </script>
+</body></html>

@@ -1,0 +1,6 @@
+{
+  "name": "MarketPulse",
+  "description": "A mobile-first grocery price tracker and food budget manager for Nigerian households.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

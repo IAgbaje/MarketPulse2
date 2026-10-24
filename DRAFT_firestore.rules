@@ -1,0 +1,367 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net: Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // =========================================================================
+    // Hardened Global Primitives
+    // =========================================================================
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // =========================================================================
+    // Entity Validation Blueprints (Anti-Update-Gap)
+    // =========================================================================
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll([
+        'uid', 'name', 'household', 'location', 'activeRegionId',
+        'avatarInitials', 'twoFactorEnabled', 'biometricLock',
+        'isSecured', 'syncState', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'uid', 'name', 'household', 'location', 'activeRegionId',
+        'avatarInitials', 'twoFactorEnabled', 'biometricLock',
+        'isSecured', 'syncState', 'createdAt', 'updatedAt'
+      ]) &&
+      data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 &&
+      data.uid.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.uid == request.auth.uid &&
+      data.uid == userId &&
+      data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
+      data.household is string && data.household.size() >= 1 && data.household.size() <= 100 &&
+      data.location is string && data.location.size() >= 1 && data.location.size() <= 100 &&
+      data.activeRegionId is string && data.activeRegionId.size() >= 1 && data.activeRegionId.size() <= 50 &&
+      data.avatarInitials is string && data.avatarInitials.size() >= 1 && data.avatarInitials.size() <= 10 &&
+      data.twoFactorEnabled is bool &&
+      data.biometricLock is bool &&
+      data.isSecured is bool &&
+      data.syncState is string && data.syncState.size() <= 20 &&
+      data.syncState in ['synced', 'syncing', 'local_only'] &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp &&
+      data.updatedAt == request.time;
+    }
+
+    function isValidUserPrivateInfo(data, userId) {
+      return data.keys().hasAll([
+        'uid', 'email', 'phone', 'contact', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'uid', 'email', 'phone', 'contact', 'createdAt', 'updatedAt'
+      ]) &&
+      data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 &&
+      data.uid.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.uid == request.auth.uid &&
+      data.uid == userId &&
+      data.email is string && data.email.size() <= 150 &&
+      data.phone is string && data.phone.size() <= 50 &&
+      data.contact is string && data.contact.size() <= 150 &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp &&
+      data.updatedAt == request.time;
+    }
+
+    function isValidUserBudget(data, userId) {
+      return data.keys().hasAll([
+        'uid', 'monthlyTarget', 'spentSoFar', 'currentDay', 'totalDays',
+        'frequency', 'produceBudget', 'produceSpent', 'proteinsBudget',
+        'proteinsSpent', 'pantryBudget', 'pantrySpent', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'uid', 'monthlyTarget', 'spentSoFar', 'currentDay', 'totalDays',
+        'frequency', 'produceBudget', 'produceSpent', 'proteinsBudget',
+        'proteinsSpent', 'pantryBudget', 'pantrySpent', 'createdAt', 'updatedAt'
+      ]) &&
+      data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 &&
+      data.uid.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.uid == request.auth.uid &&
+      data.uid == userId &&
+      (data.monthlyTarget is int || data.monthlyTarget is float) && data.monthlyTarget >= 0 && data.monthlyTarget <= 100000000 &&
+      (data.spentSoFar is int || data.spentSoFar is float) && data.spentSoFar >= 0 && data.spentSoFar <= 100000000 &&
+      data.currentDay is int && data.currentDay >= 1 && data.currentDay <= 366 &&
+      data.totalDays is int && data.totalDays >= 1 && data.totalDays <= 366 &&
+      data.frequency is string && data.frequency.size() <= 20 && data.frequency in ['Weekly', 'Fortnightly', 'Monthly'] &&
+      (data.produceBudget is int || data.produceBudget is float) && data.produceBudget >= 0 && data.produceBudget <= 100000000 &&
+      (data.produceSpent is int || data.produceSpent is float) && data.produceSpent >= 0 && data.produceSpent <= 100000000 &&
+      (data.proteinsBudget is int || data.proteinsBudget is float) && data.proteinsBudget >= 0 && data.proteinsBudget <= 100000000 &&
+      (data.proteinsSpent is int || data.proteinsSpent is float) && data.proteinsSpent >= 0 && data.proteinsSpent <= 100000000 &&
+      (data.pantryBudget is int || data.pantryBudget is float) && data.pantryBudget >= 0 && data.pantryBudget <= 100000000 &&
+      (data.pantrySpent is int || data.pantrySpent is float) && data.pantrySpent >= 0 && data.pantrySpent <= 100000000 &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp &&
+      data.updatedAt == request.time;
+    }
+
+    function isValidTrip(data) {
+      return data.keys().hasAll([
+        'uid', 'market', 'date', 'rawDate', 'itemsCount',
+        'total', 'syncStatus', 'pctChange', 'isPositiveChange',
+        'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'uid', 'market', 'date', 'rawDate', 'itemsCount',
+        'total', 'syncStatus', 'pctChange', 'isPositiveChange',
+        'createdAt', 'updatedAt'
+      ]) &&
+      data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 &&
+      data.uid.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.uid == request.auth.uid &&
+      data.market is string && data.market.size() >= 1 && data.market.size() <= 100 &&
+      data.date is string && data.date.size() >= 1 && data.date.size() <= 50 &&
+      data.rawDate is string && data.rawDate.size() >= 1 && data.rawDate.size() <= 50 &&
+      data.itemsCount is int && data.itemsCount >= 0 && data.itemsCount <= 500 &&
+      (data.total is int || data.total is float) && data.total >= 0 && data.total <= 100000000 &&
+      data.syncStatus is string && data.syncStatus.size() <= 20 &&
+      data.syncStatus in ['synced', 'syncing', 'local_only'] &&
+      (data.pctChange is int || data.pctChange is float) && data.pctChange >= -1000 && data.pctChange <= 10000 &&
+      data.isPositiveChange is bool &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp &&
+      data.updatedAt == request.time;
+    }
+
+    function isValidTripItem(data, tripId) {
+      return data.keys().hasAll([
+        'uid', 'tripId', 'name', 'category', 'quantity',
+        'unit', 'unitDetail', 'price', 'annotationType',
+        'annotationText', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'uid', 'tripId', 'name', 'category', 'quantity',
+        'unit', 'unitDetail', 'price', 'annotationType',
+        'annotationText', 'createdAt', 'updatedAt'
+      ]) &&
+      data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 &&
+      data.uid.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.uid == request.auth.uid &&
+      data.tripId is string && data.tripId.size() >= 1 && data.tripId.size() <= 128 &&
+      data.tripId.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.tripId == tripId &&
+      data.name is string && data.name.size() >= 1 && data.name.size() <= 120 &&
+      data.category is string && data.category.size() <= 40 &&
+      data.category in ['Produce', 'Proteins', 'Pantry Staples', 'Household', 'Spices'] &&
+      (data.quantity is int || data.quantity is float) && data.quantity > 0 && data.quantity <= 100000 &&
+      data.unit is string && data.unit.size() >= 1 && data.unit.size() <= 30 &&
+      data.unitDetail is string && data.unitDetail.size() >= 1 && data.unitDetail.size() <= 60 &&
+      (data.price is int || data.price is float) && data.price >= 0 && data.price <= 100000000 &&
+      data.annotationType is string && data.annotationType.size() <= 20 &&
+      data.annotationType in ['history', 'community', 'unsure', 'outlier', 'none'] &&
+      data.annotationText is string && data.annotationText.size() <= 200 &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp &&
+      data.updatedAt == request.time;
+    }
+
+    // =========================================================================
+    // Collection 1: /users/{userId} (Non-PII Profile & Preferences)
+    // =========================================================================
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId) && existing().uid == request.auth.uid;
+
+      allow create: if isVerified() &&
+        isOwner(userId) &&
+        isValidId(userId) &&
+        isValidUserProfile(incoming(), userId) &&
+        incoming().createdAt == request.time;
+
+      allow update: if isVerified() &&
+        isValidUserProfile(incoming(), userId) &&
+        isOwner(userId) &&
+        isValidId(userId) &&
+        existing().uid == request.auth.uid &&
+        incoming().uid == existing().uid &&
+        incoming().createdAt == existing().createdAt && (
+          // Action: Update Profile Preferences
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'name', 'household', 'location', 'activeRegionId',
+            'avatarInitials', 'twoFactorEnabled', 'biometricLock',
+            'isSecured', 'syncState', 'updatedAt'
+          ])
+        );
+
+      allow delete: if isVerified() && isOwner(userId) && isValidId(userId) && existing().uid == request.auth.uid;
+
+      // =======================================================================
+      // Subcollection 1A: /users/{userId}/private/{docId} (Isolated PII)
+      // =======================================================================
+      match /private/{docId} {
+        allow get: if isOwner(userId) &&
+          isValidId(userId) &&
+          isValidId(docId) &&
+          existing().uid == request.auth.uid &&
+          get(/databases/$(database)/documents/users/$(userId)).data.uid == request.auth.uid;
+
+        allow create: if isVerified() &&
+          isOwner(userId) &&
+          isValidId(userId) &&
+          isValidId(docId) &&
+          isValidUserPrivateInfo(incoming(), userId) &&
+          incoming().createdAt == request.time &&
+          exists(/databases/$(database)/documents/users/$(userId)) &&
+          get(/databases/$(database)/documents/users/$(userId)).data.uid == request.auth.uid;
+
+        allow update: if isVerified() &&
+          isValidUserPrivateInfo(incoming(), userId) &&
+          isOwner(userId) &&
+          isValidId(userId) &&
+          isValidId(docId) &&
+          existing().uid == request.auth.uid &&
+          incoming().uid == existing().uid &&
+          incoming().createdAt == existing().createdAt &&
+          get(/databases/$(database)/documents/users/$(userId)).data.uid == request.auth.uid && (
+            // Action: Update Contact PII
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'email', 'phone', 'contact', 'updatedAt'
+            ])
+          );
+
+        allow delete: if isVerified() &&
+          isOwner(userId) &&
+          isValidId(userId) &&
+          isValidId(docId) &&
+          existing().uid == request.auth.uid &&
+          get(/databases/$(database)/documents/users/$(userId)).data.uid == request.auth.uid;
+      }
+
+      // =======================================================================
+      // Subcollection 1B: /users/{userId}/budgets/{budgetId}
+      // =======================================================================
+      match /budgets/{budgetId} {
+        allow get: if isOwner(userId) &&
+          isValidId(userId) &&
+          isValidId(budgetId) &&
+          existing().uid == request.auth.uid &&
+          get(/databases/$(database)/documents/users/$(userId)).data.uid == request.auth.uid;
+
+        allow create: if isVerified() &&
+          isOwner(userId) &&
+          isValidId(userId) &&
+          isValidId(budgetId) &&
+          isValidUserBudget(incoming(), userId) &&
+          incoming().createdAt == request.time &&
+          exists(/databases/$(database)/documents/users/$(userId)) &&
+          get(/databases/$(database)/documents/users/$(userId)).data.uid == request.auth.uid;
+
+        allow update: if isVerified() &&
+          isValidUserBudget(incoming(), userId) &&
+          isOwner(userId) &&
+          isValidId(userId) &&
+          isValidId(budgetId) &&
+          existing().uid == request.auth.uid &&
+          incoming().uid == existing().uid &&
+          incoming().createdAt == existing().createdAt &&
+          get(/databases/$(database)/documents/users/$(userId)).data.uid == request.auth.uid && (
+            // Action: Adjust Budget Targets or Spend Totals
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'monthlyTarget', 'spentSoFar', 'currentDay', 'totalDays',
+              'frequency', 'produceBudget', 'produceSpent', 'proteinsBudget',
+              'proteinsSpent', 'pantryBudget', 'pantrySpent', 'updatedAt'
+            ])
+          );
+
+        allow delete: if isVerified() &&
+          isOwner(userId) &&
+          isValidId(userId) &&
+          isValidId(budgetId) &&
+          existing().uid == request.auth.uid &&
+          get(/databases/$(database)/documents/users/$(userId)).data.uid == request.auth.uid;
+      }
+    }
+
+    // =========================================================================
+    // Collection 2: /trips/{tripId} (Shopping Trips)
+    // =========================================================================
+    match /trips/{tripId} {
+      allow get: if isSignedIn() && isValidId(tripId) && existing().uid == request.auth.uid;
+
+      allow list: if isSignedIn() && existing().uid == request.auth.uid;
+
+      allow create: if isVerified() &&
+        isValidId(tripId) &&
+        isValidTrip(incoming()) &&
+        incoming().createdAt == request.time;
+
+      allow update: if isVerified() &&
+        isValidTrip(incoming()) &&
+        isValidId(tripId) &&
+        existing().uid == request.auth.uid &&
+        incoming().uid == existing().uid &&
+        incoming().createdAt == existing().createdAt && (
+          // Action: Update Trip Metadata or Totals
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'market', 'date', 'rawDate', 'itemsCount',
+            'total', 'syncStatus', 'pctChange', 'isPositiveChange', 'updatedAt'
+          ])
+        );
+
+      allow delete: if isVerified() && isValidId(tripId) && existing().uid == request.auth.uid;
+
+      // =======================================================================
+      // Subcollection 2A: /trips/{tripId}/items/{itemId} (Line Items)
+      // =======================================================================
+      match /items/{itemId} {
+        allow get: if isSignedIn() &&
+          isValidId(tripId) &&
+          isValidId(itemId) &&
+          existing().uid == request.auth.uid &&
+          get(/databases/$(database)/documents/trips/$(tripId)).data.uid == request.auth.uid;
+
+        allow list: if isSignedIn() && existing().uid == request.auth.uid;
+
+        allow create: if isVerified() &&
+          isValidId(tripId) &&
+          isValidId(itemId) &&
+          isValidTripItem(incoming(), tripId) &&
+          incoming().createdAt == request.time &&
+          exists(/databases/$(database)/documents/trips/$(tripId)) &&
+          get(/databases/$(database)/documents/trips/$(tripId)).data.uid == request.auth.uid;
+
+        allow update: if isVerified() &&
+          isValidTripItem(incoming(), tripId) &&
+          isValidId(tripId) &&
+          isValidId(itemId) &&
+          existing().uid == request.auth.uid &&
+          incoming().uid == existing().uid &&
+          incoming().tripId == existing().tripId &&
+          incoming().createdAt == existing().createdAt &&
+          get(/databases/$(database)/documents/trips/$(tripId)).data.uid == request.auth.uid && (
+            // Action: Edit Trip Item Details
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'name', 'category', 'quantity', 'unit', 'unitDetail',
+              'price', 'annotationType', 'annotationText', 'updatedAt'
+            ])
+          );
+
+        allow delete: if isVerified() &&
+          isValidId(tripId) &&
+          isValidId(itemId) &&
+          existing().uid == request.auth.uid &&
+          get(/databases/$(database)/documents/trips/$(tripId)).data.uid == request.auth.uid;
+      }
+    }
+  }
+}

@@ -1,0 +1,263 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+<title>MarketPulse - Confirm and Correct</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-bright": "#f8f9fd",
+                        "tertiary": "#714800",
+                        "on-secondary-fixed-variant": "#334959",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#cee5f9",
+                        "surface-container-highest": "#e1e2e6",
+                        "primary": "#00567c",
+                        "surface-container-low": "#f2f3f7",
+                        "primary-fixed-dim": "#8fcefa",
+                        "on-tertiary-fixed-variant": "#643f00",
+                        "on-secondary-fixed": "#051e2c",
+                        "on-background": "#191c1f",
+                        "primary-container": "#2a6f97",
+                        "on-primary-fixed": "#001e2f",
+                        "on-error": "#ffffff",
+                        "secondary-container": "#cbe3f7",
+                        "inverse-primary": "#8fcefa",
+                        "on-primary": "#ffffff",
+                        "outline-variant": "#c0c7cf",
+                        "tertiary-fixed-dim": "#f8bb6a",
+                        "on-surface-variant": "#40484e",
+                        "surface-tint": "#1a648c",
+                        "on-tertiary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "on-primary-fixed-variant": "#004c6e",
+                        "error-container": "#ffdad6",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-container": "#d7ecff",
+                        "on-secondary-container": "#4f6576",
+                        "on-tertiary-fixed": "#2a1800",
+                        "on-surface": "#191c1f",
+                        "inverse-on-surface": "#eff1f4",
+                        "surface": "#f8f9fd",
+                        "surface-container-high": "#e7e8ec",
+                        "surface-container": "#eceef1",
+                        "tertiary-fixed": "#ffddb5",
+                        "background": "#f8f9fd",
+                        "tertiary-container": "#8e5f15",
+                        "secondary-fixed-dim": "#b2c9dd",
+                        "surface-variant": "#e1e2e6",
+                        "surface-dim": "#d8dade",
+                        "outline": "#71787f",
+                        "primary-fixed": "#c8e6ff",
+                        "on-tertiary-container": "#ffe5c8",
+                        "on-secondary": "#ffffff",
+                        "inverse-surface": "#2e3134",
+                        "secondary": "#4b6172"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter", "sans-serif"],
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .icon-fill { font-variation-settings: 'FILL' 1; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-24 md:pb-0">
+<!-- Top Navigation / Header -->
+<header class="bg-surface-bright dark:bg-surface-dim text-primary dark:text-primary-fixed-dim font-body text-body-lg font-semibold w-full top-0 sticky bg-surface-bright dark:bg-surface-dim shadow-sm shadow-sm flex justify-between items-center px-4 h-16 w-full max-w-md mx-auto z-40">
+<button class="p-2 -ml-2 rounded-full hover:bg-surface-container-low active:scale-95 duration-100 transition-colors flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div class="flex-1 px-4 text-xl font-bold text-primary dark:text-primary-fixed-dim text-center truncate">
+            Review Trip
+        </div>
+<button class="p-2 -mr-2 rounded-full hover:bg-surface-container-low active:scale-95 duration-100 transition-colors flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</header>
+<main class="w-full max-w-md mx-auto px-4 pt-4 space-y-4">
+<!-- Info Banner -->
+<div class="bg-secondary-container text-on-secondary-container p-4 rounded-xl flex gap-3 items-start shadow-sm">
+<span class="material-symbols-outlined text-secondary shrink-0 mt-0.5 icon-fill">info</span>
+<p class="font-body text-sm leading-relaxed">
+                Please review your extracted items. Tap any row to edit details or correct amounts.
+            </p>
+</div>
+<!-- Meta Information Edit -->
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-sm space-y-4 border border-surface-variant">
+<div class="flex justify-between items-center group cursor-pointer active:scale-[0.99] transition-transform">
+<div>
+<p class="text-xs font-label text-on-surface-variant uppercase tracking-wider mb-1">Market</p>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl">location_on</span>
+<p class="font-headline font-semibold text-lg text-on-surface">Mile 12 Market</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">edit</span>
+</div>
+<hr class="border-surface-variant">
+<div class="flex justify-between items-center group cursor-pointer active:scale-[0.99] transition-transform">
+<div>
+<p class="text-xs font-label text-on-surface-variant uppercase tracking-wider mb-1">Date</p>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl">calendar_today</span>
+<p class="font-headline font-semibold text-lg text-on-surface">Today, 14 Oct</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">edit</span>
+</div>
+</div>
+<!-- Grocery List -->
+<div class="space-y-3 pb-8">
+<h2 class="font-headline font-semibold text-on-surface px-1">Extracted Items (8)</h2>
+<!-- Tomatoes (History) -->
+<button class="w-full text-left bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-surface-variant flex flex-col gap-2 active:bg-surface-container-low transition-colors">
+<div class="flex justify-between items-start w-full">
+<div class="flex flex-col">
+<span class="font-body font-semibold text-on-surface text-base">Tomatoes</span>
+<span class="font-label text-sm text-on-surface-variant">4kg</span>
+</div>
+<span class="font-headline font-bold text-on-surface text-lg tabular-nums">₦2,400</span>
+</div>
+<div class="flex items-center gap-1.5 text-xs font-label text-secondary bg-surface-container px-2 py-1 rounded-md self-start">
+<span class="material-symbols-outlined text-[14px]">history</span>
+                    You paid ₦2,100 on 4 Aug
+                </div>
+</button>
+<!-- Atarodo Pepper (Crowd) -->
+<button class="w-full text-left bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-surface-variant flex flex-col gap-2 active:bg-surface-container-low transition-colors">
+<div class="flex justify-between items-start w-full">
+<div class="flex flex-col">
+<span class="font-body font-semibold text-on-surface text-base">Atarodo Pepper</span>
+<span class="font-label text-sm text-on-surface-variant">1 bag</span>
+</div>
+<span class="font-headline font-bold text-on-surface text-lg tabular-nums">₦1,500</span>
+</div>
+<div class="flex items-center gap-1.5 text-xs font-label text-primary bg-primary-fixed rounded-md px-2 py-1 self-start">
+<span class="material-symbols-outlined text-[14px]">groups</span>
+                    Others at Mile 12 paid ₦1,400–₦1,600 · 8 reports
+                </div>
+</button>
+<!-- Onions (Unsure) -->
+<button class="w-full text-left bg-error-container/30 rounded-xl p-4 shadow-sm border border-error/30 flex flex-col gap-2 active:bg-error-container/50 transition-colors relative overflow-hidden">
+<div class="absolute top-0 right-0 w-2 h-full bg-error/50"></div>
+<div class="flex justify-between items-start w-full">
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-body font-semibold text-on-surface text-base">Onions</span>
+<span class="bg-error text-on-error text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide">Unsure</span>
+</div>
+<span class="font-label text-sm text-on-surface-variant">1 basket</span>
+</div>
+<span class="font-headline font-bold text-on-surface text-lg tabular-nums">₦3,000</span>
+</div>
+<div class="flex items-center gap-1.5 text-xs font-label text-on-error-container bg-error-container px-2 py-1 rounded-md self-start">
+<span class="material-symbols-outlined text-[14px]">help</span>
+                    Tap to verify amount
+                </div>
+</button>
+<!-- Rice (Outlier) -->
+<button class="w-full text-left bg-tertiary-fixed/30 rounded-xl p-4 shadow-sm border border-tertiary-fixed-dim flex flex-col gap-2 active:bg-tertiary-fixed/50 transition-colors">
+<div class="flex justify-between items-start w-full">
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-body font-semibold text-on-surface text-base">Rice</span>
+<span class="bg-tertiary text-on-tertiary text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide">Check This</span>
+</div>
+<span class="font-label text-sm text-on-surface-variant">5kg</span>
+</div>
+<span class="font-headline font-bold text-on-surface text-lg tabular-nums">₦12,500</span>
+</div>
+<div class="flex items-center gap-1.5 text-xs font-label text-on-tertiary-container bg-tertiary-container/10 px-2 py-1 rounded-md self-start">
+<span class="material-symbols-outlined text-[14px]">warning</span>
+                    Seems higher than usual
+                </div>
+</button>
+<!-- Garri -->
+<button class="w-full text-left bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-surface-variant flex justify-between items-center active:bg-surface-container-low transition-colors">
+<div class="flex flex-col">
+<span class="font-body font-semibold text-on-surface text-base">Garri</span>
+<span class="font-label text-sm text-on-surface-variant">1 paint</span>
+</div>
+<span class="font-headline font-bold text-on-surface text-lg tabular-nums">₦1,200</span>
+</button>
+<!-- Palm Oil -->
+<button class="w-full text-left bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-surface-variant flex justify-between items-center active:bg-surface-container-low transition-colors">
+<div class="flex flex-col">
+<span class="font-body font-semibold text-on-surface text-base">Palm Oil</span>
+<span class="font-label text-sm text-on-surface-variant">1L</span>
+</div>
+<span class="font-headline font-bold text-on-surface text-lg tabular-nums">₦1,000</span>
+</button>
+<!-- Frozen Chicken -->
+<button class="w-full text-left bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-surface-variant flex justify-between items-center active:bg-surface-container-low transition-colors">
+<div class="flex flex-col">
+<span class="font-body font-semibold text-on-surface text-base">Frozen Chicken</span>
+<span class="font-label text-sm text-on-surface-variant">1kg</span>
+</div>
+<span class="font-headline font-bold text-on-surface text-lg tabular-nums">₦2,800</span>
+</button>
+<!-- Beans (History) -->
+<button class="w-full text-left bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-surface-variant flex flex-col gap-2 active:bg-surface-container-low transition-colors">
+<div class="flex justify-between items-start w-full">
+<div class="flex flex-col">
+<span class="font-body font-semibold text-on-surface text-base">Beans</span>
+<span class="font-label text-sm text-on-surface-variant">2kg</span>
+</div>
+<span class="font-headline font-bold text-on-surface text-lg tabular-nums">₦1,800</span>
+</div>
+<div class="flex items-center gap-1.5 text-xs font-label text-secondary bg-surface-container px-2 py-1 rounded-md self-start">
+<span class="material-symbols-outlined text-[14px]">history</span>
+                    You paid ₦1,750 on 20 Sep
+                </div>
+</button>
+<!-- Add Item Button -->
+<button class="w-full py-4 border-2 border-dashed border-outline-variant rounded-xl text-primary font-semibold flex items-center justify-center gap-2 hover:bg-primary-fixed/20 active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined">add</span>
+                Add missing item
+            </button>
+</div>
+</main>
+<!-- Floating Action Footer -->
+<div class="fixed bottom-0 left-0 right-0 bg-surface-bright dark:bg-surface-dim border-t border-surface-variant shadow-[0_-4px_20px_rgba(0,0,0,0.05)] pb-safe pt-4 px-4 pb-6 z-50">
+<div class="max-w-md mx-auto flex flex-col gap-4">
+<div class="flex justify-between items-end px-2">
+<span class="font-body text-on-surface-variant">Trip Total</span>
+<span class="font-headline font-bold text-2xl text-on-surface tabular-nums">₦25,100</span>
+</div>
+<button class="w-full bg-primary text-on-primary font-bold text-lg py-4 rounded-full flex items-center justify-center gap-2 shadow-md active:scale-[0.98] active:bg-primary/90 transition-all">
+<span class="material-symbols-outlined icon-fill">check_circle</span>
+                Confirm and save
+            </button>
+</div>
+</div>
+</body></html>
