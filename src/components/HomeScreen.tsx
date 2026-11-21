@@ -1,6 +1,10 @@
 import React, { useMemo } from 'react';
 import { useMarketPulse } from '../context/MarketPulseContext';
 import { INITIAL_PRICE_MOVERS } from '../data/initialData';
+import {
+  LATEST_OFFICIAL_CPI,
+  computeBasketInflationSummary,
+} from '../data/foodInflationData';
 import { FoodIconBadge } from './ui/FoodIconBadge';
 
 export const HomeScreen: React.FC = () => {
@@ -9,11 +13,17 @@ export const HomeScreen: React.FC = () => {
     selectTrip,
     trips,
     budget,
+    commodities,
     selectCommodityById,
     activeRegion,
     setActivePriceMapTab,
     userProfile,
   } = useMarketPulse();
+
+  const basketInflation = useMemo(
+    () => computeBasketInflationSummary(commodities, activeRegion.priceMultiplier || 1),
+    [commodities, activeRegion.priceMultiplier]
+  );
 
   const regionalMovers = useMemo(() => {
     return INITIAL_PRICE_MOVERS.map((mover, idx) => {
@@ -251,6 +261,53 @@ export const HomeScreen: React.FC = () => {
         </section>
       </div>
 
+      {/* Official CBN / NBS Food Inflation Pulse Strip */}
+      <section className="mb-6 bg-white rounded-2xl p-4 sm:px-5 border border-black/[0.06] shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-start sm:items-center gap-3.5 min-w-0">
+          <div className="w-10 h-10 rounded-xl bg-[#eef6fb] border border-[#00567c]/15 text-[#00567c] flex items-center justify-center shrink-0">
+            <span className="material-symbols-outlined text-[20px]">monitoring</span>
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="font-display text-sm font-bold text-[#1d1d1f]">
+                Nigeria Food Inflation Tracker
+              </h2>
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#f5f5f7] text-[#48484a]">
+                CBN / NBS · Oct 2026
+              </span>
+            </div>
+            <p className="text-xs text-[#6e6e73] mt-0.5 leading-snug">
+              Official Food CPI:{' '}
+              <strong className="font-mono-num text-[#1d1d1f]">
+                {LATEST_OFFICIAL_CPI.foodInflationYoY.toFixed(2)}% YoY
+              </strong>{' '}
+              ·{' '}
+              <strong className="font-mono-num text-[#15803d]">
+                {LATEST_OFFICIAL_CPI.foodInflationMoM.toFixed(2)}% MoM
+              </strong>{' '}
+              · {activeRegion.state.replace(' State', '')} 14-staple basket:{' '}
+              <strong
+                className={`font-mono-num ${
+                  basketInflation.basketMoMPct <= 0 ? 'text-[#15803d]' : 'text-[#b91c1c]'
+                }`}
+              >
+                {basketInflation.basketMoMPct > 0 ? '+' : ''}
+                {basketInflation.basketMoMPct.toFixed(1)}% MoM
+              </strong>
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => navigateTo('commodity-detail')}
+          className="px-4 py-2 rounded-xl bg-[#00567c]/10 hover:bg-[#00567c] text-[#00567c] hover:text-white text-xs font-semibold transition-colors whitespace-nowrap self-start md:self-auto shrink-0 flex items-center gap-1.5"
+        >
+          <span>Track Month-on-Month</span>
+          <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
+        </button>
+      </section>
+
       {/* Bottom Row: Side-by-side Price Movers & Recent Market Runs */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Section 2: Prices That Went Up */}
@@ -292,9 +349,9 @@ export const HomeScreen: React.FC = () => {
                 key={mover.id}
                 type="button"
                 onClick={() => {
-                  if (mover.id === 'mover-1') selectCommodityById('rice-50kg');
-                  else if (mover.id === 'mover-2') selectCommodityById('tomatoes-fresh');
-                  else selectCommodityById('palm-oil-25l');
+                  if (mover.id === 'mover-1') selectCommodityById('palm-oil-5l');
+                  else if (mover.id === 'mover-2') selectCommodityById('onions-dry');
+                  else selectCommodityById('veg-oil-5l');
                 }}
                 className="w-full px-5 py-3.5 flex items-center justify-between gap-3.5 hover:bg-[#f5f5f7]/70 transition-colors text-left group"
               >

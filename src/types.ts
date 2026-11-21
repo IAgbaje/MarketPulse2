@@ -129,12 +129,19 @@ export interface Commodity {
   crowdRangeMin: number;
   crowdRangeMax: number;
   crowdReportsCount: number;
+  /** Official NBS/CBN month-on-month & 12-month inflation analytics */
+  dataSource?: string;
+  nbsUnitRef?: string;
+  momChangePct?: number;
+  yoyChangePct?: number;
+  seasonalityNote?: string;
   chartData: {
     labels: string[];
     datasets: {
       label: string;
       data: (number | null)[];
       color: string;
+      isNationalBenchmark?: boolean;
     }[];
   };
   loggedPurchases: {

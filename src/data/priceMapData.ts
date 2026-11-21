@@ -57,10 +57,10 @@ export interface BasketOption {
 export const COMMODITY_META: CommodityMetaItem[] = [
   { key: 'rice', label: 'Rice (50kg)', shortLabel: 'Rice (50kg)', emoji: '🌾', linkedCommodityId: 'rice-50kg' },
   { key: 'tomatoes', label: 'Tomatoes (Basket)', shortLabel: 'Tomatoes', emoji: '🍅', linkedCommodityId: 'tomatoes-fresh' },
-  { key: 'beans', label: 'Beans (Oloyin)', shortLabel: 'Beans (Oloyin)', emoji: '🫘', linkedCommodityId: 'rice-50kg' },
-  { key: 'garri', label: 'Garri (Paint)', shortLabel: 'Garri (Paint)', emoji: '🥣', linkedCommodityId: 'rice-50kg' },
-  { key: 'palmoil', label: 'Palm Oil (5L)', shortLabel: 'Palm Oil', emoji: '🛢️', linkedCommodityId: 'palm-oil-25l' },
-  { key: 'onions', label: 'Onions (Dry Bag)', shortLabel: 'Onions', emoji: '🧅', linkedCommodityId: 'tomatoes-fresh' },
+  { key: 'beans', label: 'Beans (Oloyin)', shortLabel: 'Beans (Oloyin)', emoji: '🫘', linkedCommodityId: 'beans-oloyin' },
+  { key: 'garri', label: 'Garri (Paint)', shortLabel: 'Garri (Paint)', emoji: '🥣', linkedCommodityId: 'garri-white' },
+  { key: 'palmoil', label: 'Palm Oil (5L)', shortLabel: 'Palm Oil', emoji: '🛢️', linkedCommodityId: 'palm-oil-5l' },
+  { key: 'onions', label: 'Onions (Dry Bag)', shortLabel: 'Onions', emoji: '🧅', linkedCommodityId: 'onions-dry' },
 ];
 
 export const MARKET_PINS: MarketPinData[] = [

@@ -5,6 +5,7 @@ export interface ChartDataset {
   label: string;
   data: (number | null)[];
   color: string;
+  isNationalBenchmark?: boolean;
 }
 
 interface InteractivePriceChartProps {
@@ -13,13 +14,13 @@ interface InteractivePriceChartProps {
   priceMultiplier?: number;
 }
 
-type TimeRangeKey = '1M' | '3M' | '6M' | 'ALL';
+type TimeRangeKey = '3M' | '6M' | '9M' | '1Y';
 
 const RANGE_OPTIONS: { key: TimeRangeKey; label: string; points: number }[] = [
-  { key: '1M', label: '1M', points: 3 },
-  { key: '3M', label: '3M', points: 6 },
-  { key: '6M', label: '6M', points: 10 },
-  { key: 'ALL', label: 'All', points: 999 },
+  { key: '3M', label: '3M', points: 3 },
+  { key: '6M', label: '6M', points: 6 },
+  { key: '9M', label: '9M', points: 9 },
+  { key: '1Y', label: '12M (1Y)', points: 999 },
 ];
 
 export const InteractivePriceChart: React.FC<InteractivePriceChartProps> = ({
@@ -27,7 +28,7 @@ export const InteractivePriceChart: React.FC<InteractivePriceChartProps> = ({
   datasets,
   priceMultiplier = 1,
 }) => {
-  const [range, setRange] = useState<TimeRangeKey>('ALL');
+  const [range, setRange] = useState<TimeRangeKey>('1Y');
   const [hiddenSeries, setHiddenSeries] = useState<Record<string, boolean>>({});
   const [scrubIndex, setScrubIndex] = useState<number | null>(null);
   const svgContainerRef = useRef<HTMLDivElement | null>(null);
@@ -41,13 +42,16 @@ export const InteractivePriceChart: React.FC<InteractivePriceChartProps> = ({
   const visibleLabels = useMemo(() => labels.slice(startIdx), [labels, startIdx]);
 
   const scaledDatasets = useMemo(() => {
-    return datasets.map((ds) => ({
-      ...ds,
-      visible: !hiddenSeries[ds.label],
-      data: ds.data
-        .slice(startIdx)
-        .map((v) => (v === null ? null : Math.round((v * priceMultiplier) / 100) * 100)),
-    }));
+    return datasets.map((ds) => {
+      const factor = ds.isNationalBenchmark ? 1 : priceMultiplier;
+      return {
+        ...ds,
+        visible: !hiddenSeries[ds.label],
+        data: ds.data
+          .slice(startIdx)
+          .map((v) => (v === null ? null : Math.round((v * factor) / 50) * 50)),
+      };
+    });
   }, [datasets, hiddenSeries, startIdx, priceMultiplier]);
 
   const activeValues = useMemo(() => {
@@ -129,17 +133,23 @@ export const InteractivePriceChart: React.FC<InteractivePriceChartProps> = ({
     if (effectiveIdx === null) return [];
     return scaledDatasets
       .filter((d) => d.visible && d.data[effectiveIdx] !== null)
-      .map((d) => ({
-        label: d.label,
-        color: d.color,
-        value: d.data[effectiveIdx] as number,
-      }));
+      .map((d) => {
+        const curVal = d.data[effectiveIdx] as number;
+        const prevVal = effectiveIdx > 0 ? d.data[effectiveIdx - 1] : null;
+        const momPct =
+          prevVal && prevVal > 0
+            ? Number((((curVal - prevVal) / prevVal) * 100).toFixed(1))
+            : null;
+        return {
+          label: d.label,
+          color: d.color,
+          value: curVal,
+          momPct,
+        };
+      });
   }, [effectiveIdx, scaledDatasets]);
 
-  const scrubSpread =
-    activeScrubEntries.length >= 2
-      ? Math.abs(activeScrubEntries[0].value - activeScrubEntries[1].value)
-      : null;
+  const primaryMoM = activeScrubEntries[0]?.momPct ?? null;
 
   // Show evenly spaced X-axis labels so they never collide
   const xLabelStep = visibleLabels.length > 7 ? 2 : 1;
@@ -223,11 +233,15 @@ export const InteractivePriceChart: React.FC<InteractivePriceChartProps> = ({
                 </div>
               ))}
             </div>
-            {scrubSpread !== null && scrubSpread > 0 && (
+            {primaryMoM !== null && (
               <div className="mt-1.5 pt-1.5 border-t border-slate-900/8 flex items-center justify-between text-[11px]">
-                <span className="text-[#64748b]">Market spread</span>
-                <span className="font-mono-num font-semibold text-[#00567c]">
-                  ₦{scrubSpread.toLocaleString()}
+                <span className="text-[#64748b]">Month-on-Month</span>
+                <span
+                  className={`font-mono-num font-bold ${
+                    primaryMoM <= 0 ? 'text-[#15803d]' : 'text-[#b91c1c]'
+                  }`}
+                >
+                  {primaryMoM > 0 ? `+${primaryMoM}%` : `${primaryMoM}%`}
                 </span>
               </div>
             )}

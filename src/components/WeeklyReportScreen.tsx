@@ -45,28 +45,28 @@ export const WeeklyReportScreen: React.FC = () => {
 
   const movers = [
     {
-      id: 'tomatoes-fresh',
-      name: 'Tomatoes (Basket)',
+      id: 'palm-oil-5l',
+      name: 'Palm Oil (5L Keg)',
       market: 'Mile 12 Market',
-      price: '₦18,500',
-      delta: '↑ 12%',
+      price: '₦13,200',
+      delta: '↑ 3.9%',
       tone: 'danger' as const,
     },
     {
-      id: 'rice-50kg',
-      name: 'Rice (Derica)',
-      market: 'Oyingbo Market',
-      price: '₦1,100',
-      delta: '↓ 4%',
+      id: 'tomatoes-fresh',
+      name: 'Tomatoes (Basket)',
+      market: 'Mile 12 Market',
+      price: '₦46,500',
+      delta: '↓ 4.1%',
       tone: 'positive' as const,
     },
     {
-      id: 'palm-oil-25l',
-      name: 'Palm Oil (5L)',
-      market: 'Mile 12 Market',
-      price: '₦4,200',
-      delta: 'Steady',
-      tone: 'neutral' as const,
+      id: 'rice-50kg',
+      name: 'Rice (Local 50kg)',
+      market: 'Oyingbo Market',
+      price: '₦89,500',
+      delta: '↓ 2.2%',
+      tone: 'positive' as const,
     },
   ];
 

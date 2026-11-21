@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useMarketPulse } from '../context/MarketPulseContext';
 import { ItemCategory, TripItem } from '../types';
-import { INITIAL_MARKETS } from '../data/initialData';
 import { CATEGORY_REGISTRY } from '../data/nigerianFoodRegistry';
 import { AdaptiveSheet } from './ui/AdaptiveSheet';
 import { FoodIconBadge } from './ui/FoodIconBadge';
 import { CalendarPicker } from './ui/CalendarPicker';
 import { NairaInput } from './ui/NairaInput';
+import { MarketPicker } from './ui/MarketPicker';
 
 export const LogConfirmScreen: React.FC = () => {
   const {
@@ -16,13 +16,11 @@ export const LogConfirmScreen: React.FC = () => {
     setStagingMarket,
     stagingDate,
     setStagingDate,
-    availableMarkets,
+    activeRegion,
     saveStagingTrip,
     navigateTo,
     setPendingRawInput,
   } = useMarketPulse();
-
-  const [isEditingMarket, setIsEditingMarket] = useState(false);
 
   const [editingItem, setEditingItem] = useState<TripItem | null>(null);
   const [editPrice, setEditPrice] = useState<number | ''>('');
@@ -102,42 +100,17 @@ export const LogConfirmScreen: React.FC = () => {
           {/* Left Column: Market & Date + Item Verification List */}
           <div className="lg:col-span-8 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Editable Market Card */}
-              <div className="p-3.5 bg-white rounded-2xl border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.03)] min-w-0">
-                <span className="text-[11px] text-[#6e6e73] font-semibold mb-1 flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[14px] text-[#00567c]">
-                    storefront
-                  </span>
-                  Market
-                </span>
-                {isEditingMarket ? (
-                  <select
-                    value={stagingMarket}
-                    onChange={(e) => {
-                      setStagingMarket(e.target.value);
-                      setIsEditingMarket(false);
-                    }}
-                    className="w-full min-w-0 bg-[#f5f5f7] text-xs font-semibold text-[#1d1d1f] p-2 rounded-xl border border-black/[0.1] truncate"
-                    autoFocus
-                  >
-                    {(availableMarkets.length > 0 ? availableMarkets : INITIAL_MARKETS).map((m) => (
-                      <option key={m} value={m}>
-                        {m}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setIsEditingMarket(true)}
-                    className="font-semibold text-sm text-[#1d1d1f] hover:text-[#00567c] flex items-center justify-between gap-2 w-full truncate py-0.5"
-                  >
-                    <span className="truncate">{stagingMarket}</span>
-                    <span className="material-symbols-outlined text-[16px] text-[#86868b] shrink-0">
-                      edit
-                    </span>
-                  </button>
-                )}
+              {/* Searchable Market / Supermarket Picker */}
+              <div className="bg-white rounded-2xl p-1.5 border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.03)] min-w-0">
+                <MarketPicker
+                  id="confirm-market-picker-btn"
+                  label="Market or Supermarket"
+                  value={stagingMarket}
+                  activeRegionId={activeRegion.id}
+                  activeRegionName={activeRegion.name}
+                  onChange={(name) => setStagingMarket(name)}
+                  compact
+                />
               </div>
 
               {/* Calendar Picker */}

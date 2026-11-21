@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { useMarketPulse } from '../context/MarketPulseContext';
 import { PriceMapTab } from '../types';
 import { PriceMapCommodityKey } from '../data/priceMapData';
+import { LiveMarketGoogleMap } from './price-map/LiveMarketGoogleMap';
 import { PriceMapChoroplethView } from './price-map/PriceMapChoroplethView';
 import { PriceMapCheapestView } from './price-map/PriceMapCheapestView';
 import { PriceMapBasketView } from './price-map/PriceMapBasketView';
@@ -26,6 +27,7 @@ export const PriceMapScreen: React.FC = () => {
 
   const [selectedCommodityKey, setSelectedCommodityKey] = useState<PriceMapCommodityKey>('rice');
   const [selectedMarketId, setSelectedMarketId] = useState<string>('mile-12');
+  const [mapDisplayMode, setMapDisplayMode] = useState<'google-map' | 'price-grid'>('google-map');
 
   const handleSelectTab = (tab: PriceMapTab) => {
     setActivePriceMapTab(tab);
@@ -49,8 +51,8 @@ export const PriceMapScreen: React.FC = () => {
               Check Market Prices
             </h1>
             <p className="text-sm text-[#6e6e73] mt-1">
-              See what everyday shoppers are paying across states and find where your market bag is
-              cheapest.
+              Locate real markets near you with live directions, see what everyday shoppers are
+              paying, and find where your market bag is cheapest.
             </p>
           </div>
 
@@ -92,17 +94,75 @@ export const PriceMapScreen: React.FC = () => {
 
         {/* Active View */}
         {activePriceMapTab === 'map' && (
-          <PriceMapChoroplethView
-            selectedCommodityKey={selectedCommodityKey}
-            onSelectCommodityKey={setSelectedCommodityKey}
-            selectedMarketId={selectedMarketId}
-            onSelectMarketId={setSelectedMarketId}
-            watchlistMarkets={watchlistMarkets}
-            onToggleWatchlist={toggleWatchlistMarket}
-            onSwitchTab={handleSelectTab}
-            onOpenCommodityTrend={(id) => selectCommodityById(id)}
-            onLogAtMarket={handleLogAtMarket}
-          />
+          <div className="space-y-4">
+            {/* Live Google Map vs Regional Price Grid Mode Toggle */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div
+                role="tablist"
+                aria-label="Map view mode"
+                className="inline-grid grid-cols-2 bg-[#e5e5ea]/80 p-1 rounded-xl border border-black/[0.05] w-full sm:w-fit"
+              >
+                {(
+                  [
+                    { id: 'google-map', label: 'Live Google Map', icon: 'location_on' },
+                    { id: 'price-grid', label: 'State Price Grid', icon: 'grid_view' },
+                  ] as const
+                ).map((mode) => {
+                  const active = mapDisplayMode === mode.id;
+                  return (
+                    <button
+                      key={mode.id}
+                      role="tab"
+                      aria-selected={active}
+                      type="button"
+                      onClick={() => setMapDisplayMode(mode.id)}
+                      className={`relative flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
+                        active ? 'text-[#00567c]' : 'text-[#6e6e73] hover:text-[#1d1d1f]'
+                      }`}
+                    >
+                      {active && (
+                        <motion.span
+                          layoutId="map-display-mode-indicator"
+                          transition={{ type: 'spring', stiffness: 500, damping: 36 }}
+                          className="absolute inset-0 bg-white rounded-lg shadow-2xs border border-black/[0.05]"
+                        />
+                      )}
+                      <span className="material-symbols-outlined text-[15px] relative z-10">
+                        {mode.icon}
+                      </span>
+                      <span className="relative z-10">{mode.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <span className="text-xs text-[#6e6e73]">
+                {mapDisplayMode === 'google-map'
+                  ? 'Switch state in the top bar to jump to real markets in another state.'
+                  : 'Compare 30-day crowdsourced staple prices across Nigerian states.'}
+              </span>
+            </div>
+
+            {mapDisplayMode === 'google-map' ? (
+              <LiveMarketGoogleMap
+                watchlistMarkets={watchlistMarkets}
+                onToggleWatchlist={toggleWatchlistMarket}
+                onLogAtMarket={handleLogAtMarket}
+              />
+            ) : (
+              <PriceMapChoroplethView
+                selectedCommodityKey={selectedCommodityKey}
+                onSelectCommodityKey={setSelectedCommodityKey}
+                selectedMarketId={selectedMarketId}
+                onSelectMarketId={setSelectedMarketId}
+                watchlistMarkets={watchlistMarkets}
+                onToggleWatchlist={toggleWatchlistMarket}
+                onSwitchTab={handleSelectTab}
+                onOpenCommodityTrend={(id) => selectCommodityById(id)}
+                onLogAtMarket={handleLogAtMarket}
+              />
+            )}
+          </div>
         )}
 
         {activePriceMapTab === 'markets' && (

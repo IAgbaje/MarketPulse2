@@ -54,7 +54,18 @@ export const TripDetailPanel: React.FC<TripDetailPanelProps> = ({ trip, onDelete
     const lower = itemName.toLowerCase();
     if (lower.includes('tomato')) selectCommodityById('tomatoes-fresh');
     else if (lower.includes('rice')) selectCommodityById('rice-50kg');
-    else if (lower.includes('oil')) selectCommodityById('palm-oil-25l');
+    else if (lower.includes('bean')) selectCommodityById('beans-oloyin');
+    else if (lower.includes('garri')) selectCommodityById('garri-white');
+    else if (lower.includes('palm oil') || lower.includes('red oil')) selectCommodityById('palm-oil-5l');
+    else if (lower.includes('veg') || lower.includes('groundnut oil') || lower.includes('oil')) selectCommodityById('veg-oil-5l');
+    else if (lower.includes('egg')) selectCommodityById('eggs-crate');
+    else if (lower.includes('beef') || lower.includes('meat')) selectCommodityById('beef-1kg');
+    else if (lower.includes('chicken')) selectCommodityById('chicken-frozen-1kg');
+    else if (lower.includes('yam')) selectCommodityById('yam-tuber');
+    else if (lower.includes('onion')) selectCommodityById('onions-dry');
+    else if (lower.includes('bread')) selectCommodityById('bread-sliced');
+    else if (lower.includes('plantain')) selectCommodityById('plantain-bunch');
+    else if (lower.includes('mango')) selectCommodityById('mango-basket');
   };
 
   return (

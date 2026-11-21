@@ -1,7 +1,10 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useMarketPulse } from '../../context/MarketPulseContext';
-import { MARKET_PINS } from '../../data/priceMapData';
+import {
+  ALL_NIGERIAN_MARKETS,
+  MARKET_TYPE_LABELS,
+} from '../../data/nigerianMarketsRegistry';
 import { FoodIconBadge } from './FoodIconBadge';
 import { ItemCategory } from '../../types';
 
@@ -30,6 +33,7 @@ export const CommandPalette: React.FC = () => {
     regions,
     activeRegion,
     setActiveRegionId,
+    setStagingMarket,
     exportData,
   } = useMarketPulse();
 
@@ -136,25 +140,29 @@ export const CommandPalette: React.FC = () => {
       onSelect: () => selectTrip(t),
     }));
 
-    const marketItems: CommandItem[] = MARKET_PINS.map((m) => ({
-      id: `cmd-m-${m.id}`,
-      group: 'Markets & States',
-      title: m.name,
-      subtitle: `${m.area} · ${m.distanceKm} km away`,
-      trailing: `${m.reportsCount} reports`,
-      icon: 'storefront',
-      onSelect: () => {
-        setActivePriceMapTab('map');
-        navigateTo('price-map', { tab: 'map' });
-      },
-    }));
+    const marketItems: CommandItem[] = ALL_NIGERIAN_MARKETS.map((m) => {
+      const meta = MARKET_TYPE_LABELS[m.type];
+      return {
+        id: `cmd-m-${m.id}`,
+        group: 'Markets & States',
+        title: m.name,
+        subtitle: `${m.city} · ${m.stateName} · ${m.popularFor}`,
+        trailing: meta.shortLabel,
+        icon: meta.icon,
+        onSelect: () => {
+          setActiveRegionId(m.stateId);
+          setStagingMarket(m.name);
+          navigateTo('log-choice');
+        },
+      };
+    });
 
     const regionItems: CommandItem[] = regions.map((r) => ({
       id: `cmd-r-${r.id}`,
       group: 'Markets & States',
       title: `Switch to ${r.name}`,
       subtitle: r.tagline,
-      trailing: r.id === activeRegion.id ? 'Active' : undefined,
+      trailing: r.id === activeRegion.id ? 'Active' : `${r.markets.length} markets`,
       icon: 'location_on',
       onSelect: () => {
         setActiveRegionId(r.id);
@@ -173,6 +181,7 @@ export const CommandPalette: React.FC = () => {
     selectCommodityById,
     selectTrip,
     setActiveRegionId,
+    setStagingMarket,
     exportData,
     setCommandPaletteOpen,
   ]);
@@ -180,12 +189,14 @@ export const CommandPalette: React.FC = () => {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return allCommands.slice(0, 12);
-    return allCommands.filter(
-      (item) =>
-        item.title.toLowerCase().includes(q) ||
-        item.subtitle.toLowerCase().includes(q) ||
-        item.group.toLowerCase().includes(q)
-    );
+    return allCommands
+      .filter(
+        (item) =>
+          item.title.toLowerCase().includes(q) ||
+          item.subtitle.toLowerCase().includes(q) ||
+          item.group.toLowerCase().includes(q)
+      )
+      .slice(0, 30);
   }, [allCommands, query]);
 
   useEffect(() => {

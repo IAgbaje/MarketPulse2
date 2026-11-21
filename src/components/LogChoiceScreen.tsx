@@ -11,6 +11,7 @@ import {
 import { FoodIconBadge } from './ui/FoodIconBadge';
 import { CalendarPicker } from './ui/CalendarPicker';
 import { NairaInput } from './ui/NairaInput';
+import { MarketPicker } from './ui/MarketPicker';
 
 const NIGERIAN_UNITS: { value: UnitType; label: string }[] = [
   { value: 'derica', label: 'derica' },
@@ -43,7 +44,7 @@ export const LogChoiceScreen: React.FC = () => {
     setStagingMarket,
     stagingDate,
     setStagingDate,
-    availableMarkets,
+    activeRegion,
     navigateTo,
   } = useMarketPulse();
 
@@ -303,35 +304,15 @@ export const LogChoiceScreen: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
-                {/* Market Dropdown */}
-                <div className="bg-[#f5f5f7] hover:bg-[#ebebf0] border border-black/[0.06] rounded-xl px-3.5 py-2.5 transition-colors focus-within:bg-white focus-within:border-[#00567c] focus-within:ring-2 focus-within:ring-[#00567c]/15">
-                  <label
-                    htmlFor="log-market-select"
-                    className="text-[11px] font-semibold text-[#6e6e73] flex items-center gap-1 mb-0.5"
-                  >
-                    <span className="material-symbols-outlined text-[14px] text-[#00567c]">
-                      storefront
-                    </span>
-                    <span>Market</span>
-                  </label>
-                  <div className="relative">
-                    <select
-                      id="log-market-select"
-                      value={stagingMarket}
-                      onChange={(e) => setStagingMarket(e.target.value)}
-                      className="w-full appearance-none bg-transparent text-sm font-semibold text-[#1d1d1f] pr-6 py-0.5 focus:outline-none truncate cursor-pointer"
-                    >
-                      {availableMarkets.map((m) => (
-                        <option key={m} value={m}>
-                          {m}
-                        </option>
-                      ))}
-                    </select>
-                    <span className="material-symbols-outlined absolute right-0 top-1/2 -translate-y-1/2 text-[#86868b] text-[18px] pointer-events-none">
-                      unfold_more
-                    </span>
-                  </div>
-                </div>
+                {/* Searchable Nationwide Market & Supermarket Picker */}
+                <MarketPicker
+                  id="log-market-select"
+                  label="Market or Supermarket"
+                  value={stagingMarket}
+                  activeRegionId={activeRegion.id}
+                  activeRegionName={activeRegion.name}
+                  onChange={(name) => setStagingMarket(name)}
+                />
 
                 {/* Interactive Apple Calendar Picker */}
                 <CalendarPicker
