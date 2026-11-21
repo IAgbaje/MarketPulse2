@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
+import { motion } from 'motion/react';
 import { useMarketPulse } from '../context/MarketPulseContext';
+import { FoodIconBadge } from './ui/FoodIconBadge';
 
 export const LogSuccessScreen: React.FC = () => {
-  const { lastLoggedTrip, navigateTo, isFirstTripDemo, setIsFirstTripDemo, selectTrip } = useMarketPulse();
+  const { lastLoggedTrip, navigateTo, isFirstTripDemo, setIsFirstTripDemo, selectTrip } =
+    useMarketPulse();
   const [showFirstTripState, setShowFirstTripState] = useState(isFirstTripDemo);
 
   const tripTotal = lastLoggedTrip ? lastLoggedTrip.total : 25100;
-  const marketName = lastLoggedTrip ? lastLoggedTrip.market : 'Mile 12';
-
-  const handleDone = () => {
-    navigateTo('home');
-  };
+  const marketName = lastLoggedTrip ? lastLoggedTrip.market : 'Mile 12 Market';
 
   const handleViewDetails = () => {
     if (lastLoggedTrip) {
@@ -21,184 +20,158 @@ export const LogSuccessScreen: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#f8f9fd] pt-20 pb-24 px-4 md:px-6 max-w-md mx-auto w-full relative">
-      {/* Ambient background accent */}
-      <div className="absolute top-0 left-0 right-0 h-56 bg-gradient-to-b from-[#c8e6ff]/40 to-transparent pointer-events-none rounded-b-[3rem]" />
-
-      <div className="flex-1 flex flex-col gap-6 relative z-10">
-        {/* Toggle between Standard & First Trip Demo State */}
-        <div className="flex items-center justify-between bg-white px-3 py-1.5 rounded-full border border-[#c0c7cf]/30 shadow-2xs text-xs">
-          <span className="text-[#40484e] font-medium">Preview state:</span>
-          <div className="flex gap-1">
-            <button
-              onClick={() => {
-                setShowFirstTripState(false);
-                setIsFirstTripDemo(false);
-              }}
-              className={`px-2.5 py-1 rounded-full font-semibold transition-all ${
-                !showFirstTripState ? 'bg-[#00567c] text-white' : 'text-[#40484e]'
-              }`}
-            >
-              Movers
-            </button>
-            <button
-              onClick={() => {
-                setShowFirstTripState(true);
-                setIsFirstTripDemo(true);
-              }}
-              className={`px-2.5 py-1 rounded-full font-semibold transition-all ${
-                showFirstTripState ? 'bg-[#00567c] text-white' : 'text-[#40484e]'
-              }`}
-            >
-              First Trip
-            </button>
+    <div className="min-h-screen bg-[#f5f5f7] pt-16 pb-20 px-4 sm:px-6">
+      <div className="max-w-lg mx-auto pt-6 space-y-5">
+        {/* Segmented Preview Mode */}
+        <div className="flex items-center justify-between gap-3 bg-white px-3.5 py-2 rounded-2xl border border-black/[0.06] shadow-[0_1px_2px_rgba(0,0,0,0.02)] text-xs">
+          <span className="text-[#6e6e73] font-medium">Summary view</span>
+          <div className="inline-grid grid-cols-2 bg-[#f2f2f7] p-0.5 rounded-xl">
+            {(
+              [
+                { id: false, label: 'Price Changes' },
+                { id: true, label: 'First Run' },
+              ] as const
+            ).map((opt) => {
+              const active = showFirstTripState === opt.id;
+              return (
+                <button
+                  key={opt.label}
+                  type="button"
+                  onClick={() => {
+                    setShowFirstTripState(opt.id);
+                    setIsFirstTripDemo(opt.id);
+                  }}
+                  className={`relative px-3 py-1 rounded-lg font-semibold text-xs transition-colors whitespace-nowrap ${
+                    active ? 'text-[#00567c]' : 'text-[#6e6e73]'
+                  }`}
+                >
+                  {active && (
+                    <motion.span
+                      layoutId="log-success-mode"
+                      transition={{ type: 'spring', stiffness: 480, damping: 36 }}
+                      className="absolute inset-0 bg-white rounded-lg shadow-2xs"
+                    />
+                  )}
+                  <span className="relative z-10">{opt.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Hero Section: Total Spend */}
+        {/* Hero Summary Card */}
         {!showFirstTripState ? (
-          <section className="flex flex-col items-center justify-center text-center pt-7 pb-8 px-6 bg-white rounded-3xl shadow-xs border border-[#c0c7cf]/40 relative overflow-hidden">
-            <div className="flex items-center justify-center w-12 h-12 bg-[#c8e6ff] rounded-full mb-3 text-[#00567c] shadow-inner">
-              <span className="material-symbols-outlined text-2xl filled">
-                check_circle
-              </span>
+          <section className="flex flex-col items-center text-center py-8 px-6 bg-white rounded-2xl border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.03)] space-y-3">
+            <div className="w-12 h-12 bg-[#ecfdf5] rounded-2xl flex items-center justify-center text-[#15803d]">
+              <span className="material-symbols-outlined text-2xl filled">check_circle</span>
             </div>
 
-            <h2 className="text-[#40484e] text-xs font-bold mb-1 uppercase tracking-wider">
-              Total Spend
-            </h2>
+            <div className="text-xs font-semibold text-[#6e6e73]">
+              Market Run Saved · {marketName}
+            </div>
 
-            <div className="text-4xl sm:text-5xl font-extrabold text-[#00567c] tabular-nums tracking-tight mb-3">
+            <div className="font-display font-mono-num text-4xl sm:text-5xl font-extrabold text-[#1d1d1f] tracking-tight">
               ₦{tripTotal.toLocaleString()}
             </div>
 
-            <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#ffdad6]/40 rounded-full border border-[#ffdad6]">
-              <span className="material-symbols-outlined text-sm text-[#ba1a1a]">
-                arrow_upward
-              </span>
-              <span className="text-xs font-semibold text-[#ba1a1a]">
-                ₦2,400 more than your last shop at {marketName}
+            <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#c81e1e]">
+              <span className="material-symbols-outlined text-[16px]">arrow_upward</span>
+              <span className="font-mono-num">
+                ₦2,400 higher than your last run at {marketName}
               </span>
             </div>
           </section>
         ) : (
-          /* Alternative State: First Trip */
-          <section className="flex flex-col items-center justify-center text-center pt-8 pb-8 px-6 bg-white rounded-3xl shadow-xs border border-[#c0c7cf]/40">
-            <div className="w-14 h-14 bg-[#cbe3f7] text-[#00567c] rounded-2xl flex items-center justify-center mb-4 rotate-3">
-              <span className="material-symbols-outlined text-3xl filled">flag</span>
+          <section className="flex flex-col items-center text-center py-8 px-6 bg-white rounded-2xl border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.03)] space-y-4">
+            <div className="w-12 h-12 bg-[#d4e8f7] text-[#00567c] rounded-2xl flex items-center justify-center">
+              <span className="material-symbols-outlined text-2xl filled">flag</span>
             </div>
 
-            <h2 className="text-[#40484e] text-xs font-bold mb-1 uppercase tracking-wider">
-              Total Spend
-            </h2>
-
-            <div className="text-4xl sm:text-5xl font-extrabold text-[#00567c] tabular-nums tracking-tight mb-4">
-              ₦{tripTotal.toLocaleString()}
-            </div>
-
-            <div className="bg-[#eceef1] p-3.5 rounded-xl w-full border border-[#c0c7cf]/30">
-              <div className="flex items-start gap-2.5 text-left">
-                <span className="material-symbols-outlined text-[#00567c] text-[18px] mt-0.5 shrink-0 filled">
-                  info
-                </span>
-                <p className="text-[#191c1f] text-xs font-medium leading-relaxed">
-                  This is your starting point — next time we'll show you what changed.
-                </p>
+            <div>
+              <div className="text-xs font-semibold text-[#6e6e73]">First Market Run Saved</div>
+              <div className="font-display font-mono-num text-4xl sm:text-5xl font-extrabold text-[#1d1d1f] tracking-tight mt-1">
+                ₦{tripTotal.toLocaleString()}
               </div>
+            </div>
+
+            <div className="bg-[#f5f5f7] p-3.5 rounded-xl w-full flex items-start gap-2.5 text-left">
+              <span className="material-symbols-outlined text-[#00567c] text-[18px] mt-0.5 shrink-0">
+                info
+              </span>
+              <p className="text-[#48484a] text-xs leading-relaxed">
+                Nice start! Next time you buy these same items, we&apos;ll immediately show you what
+                went up or dropped in price.
+              </p>
             </div>
           </section>
         )}
 
-        {/* Movers List Section (Visible on standard state) */}
+        {/* Logged Items List with Food Icons */}
         {!showFirstTripState && (
-          <section className="flex flex-col gap-2.5">
-            <div className="flex items-center justify-between px-1">
-              <h3 className="font-bold text-[#191c1f] text-base">Top Movers</h3>
-              <span className="text-[11px] font-semibold text-[#40484e] bg-[#eceef1] px-2.5 py-0.5 rounded-md">
-                Since last trip
-              </span>
+          <section className="bg-white rounded-2xl border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.03)] overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-black/[0.06] flex items-center justify-between">
+              <h2 className="font-display font-bold text-sm text-[#1d1d1f]">Items You Logged</h2>
+              <span className="text-xs text-[#6e6e73]">Vs last time</span>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-xs border border-[#c0c7cf]/40 overflow-hidden divide-y divide-[#e1e2e6]/70">
+            <div className="divide-y divide-black/[0.05]">
               {lastLoggedTrip && lastLoggedTrip.items && lastLoggedTrip.items.length > 0 ? (
-                lastLoggedTrip.items.slice(0, 4).map((item, idx) => (
-                  <div key={item.id || idx} className="flex justify-between items-center p-3.5 hover:bg-[#f2f3f7] transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#f2f3f7] flex items-center justify-center text-xl shadow-inner border border-[#e1e2e6]">
-                        {item.name.toLowerCase().includes('tomato')
-                          ? '🍅'
-                          : item.name.toLowerCase().includes('pepper')
-                          ? '🌶️'
-                          : item.name.toLowerCase().includes('onion')
-                          ? '🧅'
-                          : item.name.toLowerCase().includes('oil')
-                          ? '🛢️'
-                          : item.name.toLowerCase().includes('fish')
-                          ? '🐟'
-                          : item.name.toLowerCase().includes('rice')
-                          ? '🌾'
-                          : '🛒'}
-                      </div>
-                      <div>
-                        <span className="font-semibold text-sm text-[#191c1f] block leading-tight">{item.name}</span>
-                        <span className="text-xs text-[#71787f]">{item.unitDetail || `${item.quantity} ${item.unit}`}</span>
+                lastLoggedTrip.items.slice(0, 5).map((item, idx) => (
+                  <div
+                    key={item.id || idx}
+                    className="flex justify-between items-center gap-3 px-5 py-3.5 hover:bg-[#f5f5f7]/60 transition-colors"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <FoodIconBadge name={item.name} category={item.category} size="sm" />
+                      <div className="min-w-0">
+                        <span className="font-semibold text-sm text-[#1d1d1f] block truncate">
+                          {item.name}
+                        </span>
+                        <span className="text-xs text-[#6e6e73]">
+                          {item.unitDetail || `${item.quantity} ${item.unit}`}
+                        </span>
                       </div>
                     </div>
-                    <div className="flex flex-col items-end">
-                      <div className="font-bold text-sm text-[#00567c] tabular-nums">
+                    <div className="text-right shrink-0">
+                      <div className="font-mono-num font-bold text-sm text-[#1d1d1f]">
                         ₦{item.price.toLocaleString()}
                       </div>
                       {item.previousPrice ? (
-                        <span className={`text-[11px] font-semibold tabular-nums flex items-center gap-0.5 ${item.price > item.previousPrice ? 'text-[#ba1a1a]' : 'text-[#006e1c]'}`}>
+                        <span
+                          className={`font-mono-num text-[11px] font-semibold inline-flex items-center gap-0.5 ${
+                            item.price > item.previousPrice ? 'text-[#c81e1e]' : 'text-[#15803d]'
+                          }`}
+                        >
                           <span className="material-symbols-outlined text-[13px]">
                             {item.price > item.previousPrice ? 'arrow_upward' : 'arrow_downward'}
                           </span>
                           ₦{Math.abs(item.price - item.previousPrice).toLocaleString()}
                         </span>
                       ) : (
-                        <span className="text-[11px] text-[#71787f]">Recorded</span>
+                        <span className="text-[11px] text-[#86868b]">Saved</span>
                       )}
                     </div>
                   </div>
                 ))
               ) : (
                 <>
-                  {/* Fallback sample item 1 */}
-                  <div className="flex justify-between items-center p-3.5 hover:bg-[#f2f3f7] transition-colors">
+                  <div className="flex justify-between items-center px-5 py-3.5">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#f2f3f7] flex items-center justify-center text-xl shadow-inner border border-[#e1e2e6]">
-                        🍅
-                      </div>
-                      <span className="font-semibold text-sm text-[#191c1f]">Tomatoes</span>
+                      <FoodIconBadge name="Tomatoes" category="Produce" size="sm" />
+                      <span className="font-semibold text-sm text-[#1d1d1f]">Tomatoes</span>
                     </div>
-                    <div className="flex flex-col items-end">
-                      <div className="flex items-center text-[#ba1a1a] font-bold text-sm gap-0.5 tabular-nums">
-                        <span className="material-symbols-outlined text-[15px]">arrow_upward</span>
-                        +₦300
-                      </div>
-                      <span className="text-[11px] text-[#ba1a1a] font-semibold tabular-nums">
-                        (14% ↑)
-                      </span>
-                    </div>
+                    <span className="font-mono-num text-sm font-bold text-[#c81e1e]">
+                      +₦300 (↑ 14%)
+                    </span>
                   </div>
-
-                  {/* Fallback sample item 2 */}
-                  <div className="flex justify-between items-center p-3.5 hover:bg-[#f2f3f7] transition-colors">
+                  <div className="flex justify-between items-center px-5 py-3.5">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#f2f3f7] flex items-center justify-center text-xl shadow-inner border border-[#e1e2e6]">
-                        🧅
-                      </div>
-                      <span className="font-semibold text-sm text-[#191c1f]">Onions</span>
+                      <FoodIconBadge name="Onions" category="Produce" size="sm" />
+                      <span className="font-semibold text-sm text-[#1d1d1f]">Onions</span>
                     </div>
-                    <div className="flex flex-col items-end">
-                      <div className="flex items-center text-[#ba1a1a] font-bold text-sm gap-0.5 tabular-nums">
-                        <span className="material-symbols-outlined text-[15px]">arrow_upward</span>
-                        +₦500
-                      </div>
-                      <span className="text-[11px] text-[#ba1a1a] font-semibold tabular-nums">
-                        (20% ↑)
-                      </span>
-                    </div>
+                    <span className="font-mono-num text-sm font-bold text-[#c81e1e]">
+                      +₦500 (↑ 20%)
+                    </span>
                   </div>
                 </>
               )}
@@ -207,23 +180,25 @@ export const LogSuccessScreen: React.FC = () => {
         )}
 
         {/* Actions */}
-        <section className="mt-auto pt-4 flex flex-col gap-2.5">
+        <div className="space-y-2.5 pt-2">
           <button
             id="trip-logged-done-btn"
-            onClick={handleDone}
-            className="w-full py-4 bg-[#00567c] text-white rounded-xl font-bold text-base hover:bg-[#2a6f97] active:scale-[0.98] transition-all shadow-xs"
+            type="button"
+            onClick={() => navigateTo('home')}
+            className="w-full min-h-[48px] py-3 bg-[#00567c] text-white rounded-xl font-semibold text-sm hover:bg-[#004361] transition-colors shadow-xs"
           >
-            Done
+            Done · Back to Home
           </button>
 
           <button
             id="trip-logged-view-details-btn"
+            type="button"
             onClick={handleViewDetails}
-            className="w-full py-3 text-[#00567c] font-semibold text-sm hover:bg-[#cbe3f7]/30 active:bg-[#cbe3f7]/50 rounded-xl transition-colors"
+            className="w-full min-h-[44px] py-2.5 text-[#00567c] font-semibold text-xs hover:bg-[#d4e8f7]/40 rounded-xl transition-colors"
           >
-            View trip details
+            See Full Receipt
           </button>
-        </section>
+        </div>
       </div>
     </div>
   );

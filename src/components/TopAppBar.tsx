@@ -27,84 +27,105 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
 }) => {
   const {
     setDrawerOpen,
+    setCommandPaletteOpen,
     goBack,
     navigateTo,
     currentScreen,
     regions,
     activeRegion,
     setActiveRegionId,
+    firebaseUser,
+    userProfile,
   } = useMarketPulse();
 
   if (currentScreen === 'landing') {
     return null;
   }
 
-  const isHome = currentScreen === 'home';
-  const isPriceMap = currentScreen === 'price-map';
-  const isHistory = currentScreen === 'history';
-  const isBudget = currentScreen === 'budget';
+  const isPrimaryView =
+    currentScreen === 'home' ||
+    currentScreen === 'price-map' ||
+    currentScreen === 'history' ||
+    currentScreen === 'budget' ||
+    currentScreen === 'commodity-detail' ||
+    currentScreen === 'weekly-report';
+
   const isSubscreen =
     currentScreen === 'trip-detail' ||
-    currentScreen === 'commodity-detail' ||
-    currentScreen === 'weekly-report' ||
     currentScreen === 'set-budget' ||
     currentScreen === 'data-management' ||
     currentScreen === 'data-mgmt' ||
     currentScreen === 'account-security' ||
     currentScreen === 'secure-account' ||
     currentScreen === 'log-choice' ||
+    currentScreen === 'log-manual' ||
     currentScreen === 'log-confirm';
+
   const isClosingWorkflow =
     currentScreen === 'log-scan' ||
     currentScreen === 'log-pending' ||
     currentScreen === 'log-success';
 
   let computedTitle = title;
+  let breadcrumbParent: string | null = null;
   if (title === 'MarketPulse') {
     switch (currentScreen) {
+      case 'home':
+        computedTitle = 'Home';
+        break;
       case 'price-map':
         computedTitle = 'Price Map';
         break;
       case 'weekly-report':
-        computedTitle = 'Weekly Wrap-up';
+        computedTitle = 'Weekly Summary';
+        breadcrumbParent = 'Insights';
         break;
       case 'trip-detail':
-        computedTitle = 'Trip Details';
+        computedTitle = 'Market Receipt';
+        breadcrumbParent = 'My Market Trips';
         break;
       case 'commodity-detail':
-        computedTitle = 'Price Trends';
+        computedTitle = 'Food Prices';
         break;
       case 'budget':
-        computedTitle = 'Budget & Insights';
+        computedTitle = 'Food Budget';
         break;
       case 'set-budget':
-        computedTitle = 'Set Target Budget';
+        computedTitle = 'Set Food Budget';
+        breadcrumbParent = 'Food Budget';
         break;
       case 'history':
-        computedTitle = 'Trip History';
+        computedTitle = 'My Market Trips';
         break;
       case 'log-choice':
-        computedTitle = 'Log Items';
+      case 'log-manual':
+        computedTitle = 'Record Market Run';
+        breadcrumbParent = 'Market Bag';
         break;
       case 'log-scan':
-        computedTitle = 'Scan Receipt';
+        computedTitle = 'Snap Receipt';
+        breadcrumbParent = 'Market Bag';
         break;
       case 'log-pending':
-        computedTitle = 'Pending Review';
+        computedTitle = 'Waiting for Review';
+        breadcrumbParent = 'Market Bag';
         break;
       case 'log-confirm':
-        computedTitle = 'Review Trip';
+        computedTitle = 'Check Your Bag';
+        breadcrumbParent = 'Market Bag';
         break;
       case 'log-success':
-        computedTitle = 'Trip Summary';
+        computedTitle = 'Saved!';
         break;
       case 'data-management':
       case 'data-mgmt':
-        computedTitle = 'Data Management';
+        computedTitle = 'Export & Data';
+        breadcrumbParent = 'Settings';
         break;
       case 'account-security':
       case 'secure-account':
-        computedTitle = 'Backup & Cloud Sync';
+        computedTitle = 'Keep Records Safe';
+        breadcrumbParent = 'Settings';
         break;
       default:
         computedTitle = 'MarketPulse';
@@ -115,22 +136,16 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
   const effectiveShowClose = showClose !== undefined ? showClose : isClosingWorkflow;
   const effectiveShowBack = showBack !== undefined ? showBack : isSubscreen;
   const effectiveShowMenu = showMenu && !effectiveShowBack && !effectiveShowClose;
-  const effectiveShowAvatar = showAvatar && (isHome || isPriceMap || isHistory || isBudget);
+  const effectiveShowAvatar = showAvatar && isPrimaryView;
 
   const handleBack = () => {
-    if (onBackClick) {
-      onBackClick();
-    } else {
-      goBack();
-    }
+    if (onBackClick) onBackClick();
+    else goBack();
   };
 
   const handleClose = () => {
-    if (onCloseClick) {
-      onCloseClick();
-    } else {
-      navigateTo('home');
-    }
+    if (onCloseClick) onCloseClick();
+    else navigateTo('home');
   };
 
   const formatRegionShortName = (id: string, state: string) => {
@@ -140,68 +155,99 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
     return state.replace(' State', '');
   };
 
+  const avatarInitials =
+    (userProfile.avatarInitials && userProfile.avatarInitials.trim()) ||
+    userProfile.name
+      ?.split(' ')
+      .map((p) => p[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase() ||
+    'AO';
+
   return (
-    <header className="fixed top-0 left-0 right-0 w-full z-50 bg-[#f8f9fd]/95 backdrop-blur-md border-b border-[#c0c7cf]/40 flex justify-between items-center gap-2 px-3 sm:px-4 h-16 transition-colors shadow-none">
-      <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+    <header className="fixed top-0 left-0 right-0 lg:left-64 z-30 bg-[#f5f5f7]/85 backdrop-blur-xl border-b border-black/[0.06] flex justify-between items-center gap-3 px-3 sm:px-5 lg:px-8 h-14 lg:h-16 transition-colors">
+      {/* Left Zone: Mobile Nav Control + Contextual Breadcrumb/Title */}
+      <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0 flex-1">
         {effectiveShowClose ? (
           <button
             id="top-close-btn"
+            type="button"
             aria-label="Close"
             onClick={handleClose}
-            className="p-2 -ml-1.5 rounded-full text-[#40484e] hover:bg-[#e7e8ec] transition-colors active:scale-95 duration-100 flex items-center justify-center min-w-[40px] min-h-[40px] shrink-0"
+            className="min-w-[44px] min-h-[44px] -ml-2 rounded-full text-[#6e6e73] hover:bg-black/[0.05] transition-colors active:scale-95 flex items-center justify-center shrink-0"
           >
-            <span className="material-symbols-outlined text-[24px]">close</span>
+            <span className="material-symbols-outlined text-[22px]">close</span>
           </button>
         ) : effectiveShowBack ? (
           <button
             id="top-back-btn"
+            type="button"
             aria-label="Go back"
             onClick={handleBack}
-            className="p-2 -ml-1.5 rounded-full text-[#00567c] hover:bg-[#e7e8ec] transition-colors active:scale-95 duration-100 flex items-center justify-center min-w-[40px] min-h-[40px] shrink-0"
+            className="min-w-[44px] min-h-[44px] -ml-2 rounded-full text-[#00567c] hover:bg-black/[0.05] transition-colors active:scale-95 flex items-center justify-center shrink-0"
           >
-            <span className="material-symbols-outlined text-[24px]">arrow_back</span>
+            <span className="material-symbols-outlined text-[22px]">arrow_back</span>
           </button>
         ) : effectiveShowMenu ? (
           <button
             id="top-menu-btn"
-            aria-label="Open menu"
+            type="button"
+            aria-label="Open navigation menu"
             onClick={() => setDrawerOpen(true)}
-            className="p-2 -ml-1.5 rounded-full text-[#00567c] hover:bg-[#e7e8ec] transition-colors active:scale-95 duration-100 flex items-center justify-center min-w-[40px] min-h-[40px] shrink-0"
+            className="lg:hidden min-w-[44px] min-h-[44px] -ml-2 rounded-full text-[#00567c] hover:bg-black/[0.05] transition-colors active:scale-95 flex items-center justify-center shrink-0"
           >
-            <span className="material-symbols-outlined text-[24px]">menu</span>
+            <span className="material-symbols-outlined text-[22px]">menu</span>
           </button>
         ) : null}
 
-        <button
-          id="top-brand-title"
-          onClick={() => navigateTo('home')}
-          className="text-left font-bold text-[#00567c] text-base sm:text-xl tracking-tight font-sans transition-opacity hover:opacity-90 truncate whitespace-nowrap min-w-0"
-        >
-          {computedTitle}
-        </button>
+        <div className="flex items-center gap-2 min-w-0">
+          {breadcrumbParent && (
+            <>
+              <span className="hidden sm:inline text-sm font-medium text-[#6e6e73] whitespace-nowrap">
+                {breadcrumbParent}
+              </span>
+              <span className="hidden sm:inline text-[#aeaeb2] text-sm" aria-hidden="true">
+                /
+              </span>
+            </>
+          )}
+          <button
+            id="top-brand-title"
+            type="button"
+            onClick={() => navigateTo('home')}
+            className="text-left font-display font-bold text-[#1d1d1f] lg:text-lg text-base tracking-tight truncate whitespace-nowrap min-w-0 hover:text-[#00567c] transition-colors"
+          >
+            <span className="lg:hidden">
+              {currentScreen === 'home' ? 'MarketPulse' : computedTitle}
+            </span>
+            <span className="hidden lg:inline">{computedTitle}</span>
+          </button>
+        </div>
       </div>
 
-      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-        {effectiveShowAvatar && (
-          <button
-            id="top-landing-tour-btn"
-            onClick={() => navigateTo('landing')}
-            className="hidden md:inline-flex items-center gap-1 bg-white hover:bg-[#eceef1] border border-[#c0c7cf]/60 text-[#00567c] text-xs font-bold px-3 py-1.5 rounded-full transition-colors shrink-0"
-            title="View Product Tour & Landing Page"
-          >
-            <span className="material-symbols-outlined text-[15px]">public</span>
-            <span>Product Tour</span>
-          </button>
-        )}
+      {/* Right Zone: Search Trigger + Region Switcher + PWA + Profile */}
+      <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+        {/* Mobile/Tablet Search Icon Trigger */}
+        <button
+          id="top-search-btn"
+          type="button"
+          onClick={() => setCommandPaletteOpen(true)}
+          aria-label="Find food or market"
+          className="lg:hidden min-w-[40px] min-h-[40px] rounded-full text-[#6e6e73] hover:bg-black/[0.05] flex items-center justify-center transition-colors shrink-0"
+        >
+          <span className="material-symbols-outlined text-[20px]">search</span>
+        </button>
 
+        {/* Region Selector */}
         {effectiveShowAvatar && (
           <div className="relative shrink-0">
             <select
               id="top-region-select"
               value={activeRegion.id}
               onChange={(e) => setActiveRegionId(e.target.value)}
-              aria-label="Select state / market hub"
-              className="appearance-none bg-[#eceef1] hover:bg-[#e1e2e6] text-[#00567c] text-xs font-bold pl-6 pr-5 py-1.5 rounded-full cursor-pointer transition-colors focus:ring-2 focus:ring-[#00567c] outline-none max-w-[116px] sm:max-w-[150px] truncate"
+              aria-label="Choose your state"
+              className="appearance-none bg-white hover:bg-[#e8e8ed]/60 border border-black/[0.08] text-[#1d1d1f] text-xs font-semibold pl-7 pr-6 py-2 rounded-full cursor-pointer transition-colors outline-none max-w-[126px] sm:max-w-[160px] truncate shadow-2xs"
             >
               {regions.map((r) => (
                 <option key={r.id} value={r.id}>
@@ -209,10 +255,10 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
                 </option>
               ))}
             </select>
-            <span className="material-symbols-outlined absolute left-1.5 top-1/2 -translate-y-1/2 text-[#00567c] text-[14px] pointer-events-none">
+            <span className="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-[#00567c] text-[15px] pointer-events-none">
               location_on
             </span>
-            <span className="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 text-[#71787f] text-[14px] pointer-events-none">
+            <span className="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 text-[#86868b] text-[15px] pointer-events-none">
               expand_more
             </span>
           </div>
@@ -223,29 +269,34 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
         {showEdit && (
           <button
             id="top-edit-btn"
+            type="button"
             aria-label="Edit"
             onClick={onEditClick}
-            className="p-2 text-[#00567c] hover:bg-[#e7e8ec] rounded-full transition-colors active:scale-95 flex items-center justify-center min-w-[40px] min-h-[40px] shrink-0"
+            className="min-w-[40px] min-h-[40px] text-[#00567c] hover:bg-black/[0.05] rounded-full transition-colors active:scale-95 flex items-center justify-center shrink-0"
           >
-            <span className="material-symbols-outlined text-[22px]">edit</span>
+            <span className="material-symbols-outlined text-[21px]">edit</span>
           </button>
         )}
 
+        {/* Profile Avatar (Google Photo or Clean Initials) */}
         {effectiveShowAvatar && (
           <button
             id="top-profile-btn"
-            aria-label="User Profile"
+            type="button"
+            aria-label="Account and backup"
             onClick={() => navigateTo('account-security')}
-            className="w-8 h-8 rounded-full overflow-hidden border border-[#c0c7cf] cursor-pointer active:scale-95 duration-100 hover:ring-2 hover:ring-[#2a6f97] transition-all bg-[#e1e2e6] flex items-center justify-center shrink-0"
+            className="w-9 h-9 rounded-full overflow-hidden border border-black/[0.08] cursor-pointer active:scale-95 hover:ring-2 hover:ring-[#00567c]/30 transition-all bg-[#00567c] text-white text-xs font-bold flex items-center justify-center shrink-0"
           >
-            <img
-              alt="User Profile"
-              className="object-cover w-full h-full"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAYB8Xn5h2qr5HNT1PNFM58T2NY5vqrhvOKbnr0QsWA36wWUOHbV0ORxCA-H6Vu7m8A_iI1wWcd6IFHXLP5XVAy38nWjuikpGK9m_wtitPC4VlEgwXfQ-VTLOYZxGfBM8D7HK8MkLFqIl2pVN3JTWPA_NfUaQx00z6ywKjJQcXanRToY2S2H8rC14H8cHIDM7A83rqkO1MY4XJIyBz_J4FNT3aUfSrvLR5UqVUofjtoo_h-fIEaLc8MsQ"
-              onError={(e) => {
-                (e.target as HTMLElement).style.display = 'none';
-              }}
-            />
+            {firebaseUser?.photoURL ? (
+              <img
+                alt={userProfile.name || 'Account'}
+                className="object-cover w-full h-full"
+                src={firebaseUser.photoURL}
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <span>{avatarInitials}</span>
+            )}
           </button>
         )}
       </div>

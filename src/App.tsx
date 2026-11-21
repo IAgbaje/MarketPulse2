@@ -1,8 +1,14 @@
 import React from 'react';
+import { AnimatePresence, motion, MotionConfig } from 'motion/react';
+import { ToastProvider } from './context/ToastContext';
+import { NavigationProvider } from './context/NavigationContext';
 import { MarketPulseProvider, useMarketPulse } from './context/MarketPulseContext';
+import { DesktopSidebar } from './components/DesktopSidebar';
 import { TopAppBar } from './components/TopAppBar';
 import { NavigationDrawer } from './components/NavigationDrawer';
 import { BottomNavBar } from './components/BottomNavBar';
+import { CommandPalette } from './components/ui/CommandPalette';
+import { ToastViewport } from './components/ui/ToastViewport';
 import { LandingPageScreen } from './components/LandingPageScreen';
 import { HomeScreen } from './components/HomeScreen';
 import { PriceMapScreen } from './components/PriceMapScreen';
@@ -66,9 +72,10 @@ const MainScreenRouter: React.FC = () => {
     }
   };
 
-  // Hide bottom navbar on full-screen immersion workflows and marketing landing page
+  const isLanding = currentScreen === 'landing';
+
   const hideBottomNav =
-    currentScreen === 'landing' ||
+    isLanding ||
     currentScreen === 'log-scan' ||
     currentScreen === 'log-pending' ||
     currentScreen === 'log-confirm' ||
@@ -77,12 +84,28 @@ const MainScreenRouter: React.FC = () => {
     currentScreen === 'log-success';
 
   return (
-    <div className="min-h-screen bg-[#f8f9fd] text-[#191c1f] relative flex flex-col font-sans selection:bg-[#cbe3f7] selection:text-[#00567c]">
+    <div className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] relative flex flex-col selection:bg-[#d4e8f7] selection:text-[#00567c]">
+      {!isLanding && <DesktopSidebar />}
       <TopAppBar />
       <OfflineIndicator />
       <NavigationDrawer />
+      <CommandPalette />
+      <ToastViewport />
 
-      <main className="flex-1 w-full">{renderScreen()}</main>
+      <main className={`flex-1 w-full ${!isLanding ? 'lg:pl-64' : ''}`}>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={currentScreen}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.14, ease: [0.2, 0, 0, 1] }}
+            className="w-full"
+          >
+            {renderScreen()}
+          </motion.div>
+        </AnimatePresence>
+      </main>
 
       {!hideBottomNav && <BottomNavBar />}
     </div>
@@ -91,9 +114,15 @@ const MainScreenRouter: React.FC = () => {
 
 export function App() {
   return (
-    <MarketPulseProvider>
-      <MainScreenRouter />
-    </MarketPulseProvider>
+    <MotionConfig reducedMotion="user">
+      <ToastProvider>
+        <NavigationProvider>
+          <MarketPulseProvider>
+            <MainScreenRouter />
+          </MarketPulseProvider>
+        </NavigationProvider>
+      </ToastProvider>
+    </MotionConfig>
   );
 }
 

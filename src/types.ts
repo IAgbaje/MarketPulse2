@@ -50,14 +50,29 @@ export type UnitType =
   | 'basket'
   | 'paint'
   | 'derica'
+  | 'mudu'
+  | 'congo'
+  | 'crate'
+  | 'tuber'
   | 'L'
+  | 'bottle'
+  | 'tin'
   | 'pack'
   | 'bunch'
+  | 'loaf'
   | 'pieces'
   | 'sachet'
-  | 'tuber';
+  | 'roll';
 
-export type ItemCategory = 'Produce' | 'Proteins' | 'Pantry Staples' | 'Household' | 'Spices';
+export type ItemCategory =
+  | 'Produce'
+  | 'Proteins'
+  | 'Pantry Staples'
+  | 'Fruits'
+  | 'Tubers & Roots'
+  | 'Spices'
+  | 'Dairy & Drinks'
+  | 'Household';
 
 export interface TripItem {
   id: string;
@@ -65,7 +80,7 @@ export interface TripItem {
   category: ItemCategory;
   quantity: number;
   unit: UnitType;
-  unitDetail?: string; // e.g. "1 big basket (~40kg)", "1 bag (medium)"
+  unitDetail?: string;
   price: number;
   previousPrice?: number;
   annotationType?: 'history' | 'community' | 'unsure' | 'outlier' | 'none';
@@ -76,12 +91,12 @@ export interface Trip {
   id: string;
   market: string;
   date: string;
-  rawDate: string; // ISO or sortable
+  rawDate: string;
   itemsCount: number;
   total: number;
   syncStatus: 'local_only' | 'synced';
   pctChange?: number;
-  isPositiveChange?: boolean; // true = price up (red), false = price down (green)
+  isPositiveChange?: boolean;
   items: TripItem[];
 }
 

@@ -1,7 +1,35 @@
+/// <reference types="vite/client" />
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
-import firebaseConfig from '../../firebase-applet-config.json';
+
+interface FirebaseAppletConfig {
+  projectId: string;
+  appId: string;
+  apiKey: string;
+  authDomain: string;
+  firestoreDatabaseId: string;
+  storageBucket?: string;
+  messagingSenderId?: string;
+  measurementId?: string;
+}
+
+// Load local firebase-applet-config.json when present (in AI Studio), without failing build if gitignored in external repos
+const localConfigs = import.meta.glob<{ default: FirebaseAppletConfig }>('../../firebase-applet-config.json', {
+  eager: true,
+});
+const localConfig = localConfigs['../../firebase-applet-config.json']?.default;
+
+const firebaseConfig: FirebaseAppletConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || localConfig?.apiKey || '',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || localConfig?.projectId || '',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || localConfig?.appId || '',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || localConfig?.authDomain || '',
+  firestoreDatabaseId:
+    import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || localConfig?.firestoreDatabaseId || '(default)',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || localConfig?.storageBucket || '',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || localConfig?.messagingSenderId || '',
+};
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);

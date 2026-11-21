@@ -18,7 +18,7 @@ export default defineConfig(() => {
           short_name: 'MarketPulse',
           description: 'A mobile-first grocery price tracker and food budget manager for Nigerian households.',
           theme_color: '#00567c',
-          background_color: '#f8f9fd',
+          background_color: '#f6f8fb',
           display: 'standalone',
           start_url: '/',
           scope: '/',
@@ -44,6 +44,7 @@ export default defineConfig(() => {
           ],
         },
         workbox: {
+          maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
           runtimeCaching: [
             {
@@ -82,6 +83,17 @@ export default defineConfig(() => {
         },
       }),
     ],
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            react: ['react', 'react-dom'],
+            motion: ['motion'],
+            firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore'],
+          },
+        },
+      },
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
