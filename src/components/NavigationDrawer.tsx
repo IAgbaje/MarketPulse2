@@ -148,6 +148,7 @@ export const NavigationDrawer: React.FC = () => {
               <div className="my-2.5 border-t border-black/[0.06]" />
 
               {[
+                { id: 'drawer-link-analytics', label: 'Usage Insights', icon: 'bar_chart', screen: 'usage-analytics' as const },
                 { id: 'drawer-link-landing', label: 'About MarketPulse', icon: 'public', screen: 'landing' as const },
                 { id: 'drawer-link-account-sync', label: 'Keep Records Safe', icon: 'cloud_sync', screen: 'account-security' as const },
                 { id: 'drawer-link-data-mgmt', label: 'Export & Data', icon: 'database', screen: 'data-management' as const },

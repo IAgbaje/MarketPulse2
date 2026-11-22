@@ -50,7 +50,7 @@ export const HomeScreen: React.FC = () => {
   );
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 lg:pt-24 pb-28 lg:pb-12">
+    <div className="w-full max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-[72px] lg:pt-24 pb-24 lg:pb-12">
       {/* Desktop Welcome Greeting */}
       <div className="hidden lg:flex items-end justify-between gap-4 mb-6">
         <div>
@@ -261,31 +261,34 @@ export const HomeScreen: React.FC = () => {
         </section>
       </div>
 
-      {/* Official CBN / NBS Food Inflation Pulse Strip */}
-      <section className="mb-6 bg-white rounded-2xl p-4 sm:px-5 border border-black/[0.06] shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Official CBN / NBS Multi-Year Food & Macro Pulse Strip */}
+      <section className="mb-6 bg-white rounded-2xl p-4 sm:px-5 border border-black/[0.06] shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3.5">
         <div className="flex items-start sm:items-center gap-3.5 min-w-0">
           <div className="w-10 h-10 rounded-xl bg-[#eef6fb] border border-[#00567c]/15 text-[#00567c] flex items-center justify-center shrink-0">
             <span className="material-symbols-outlined text-[20px]">monitoring</span>
           </div>
           <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap text-xs">
               <h2 className="font-display text-sm font-bold text-[#1d1d1f]">
-                Nigeria Food Inflation Tracker
+                Nigeria NBS &amp; CBN Observatory (2023–2026)
               </h2>
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#f5f5f7] text-[#48484a]">
-                CBN / NBS · Oct 2026
-              </span>
+              <span aria-hidden="true" className="text-[#aeaeb2]">·</span>
+              <span className="font-semibold text-[#00567c]">{LATEST_OFFICIAL_CPI.month}</span>
             </div>
             <p className="text-xs text-[#6e6e73] mt-0.5 leading-snug">
-              Official Food CPI:{' '}
+              Food CPI{' '}
               <strong className="font-mono-num text-[#1d1d1f]">
-                {LATEST_OFFICIAL_CPI.foodInflationYoY.toFixed(2)}% YoY
+                {LATEST_OFFICIAL_CPI.foodInflationYoY.toFixed(2)}%
               </strong>{' '}
-              ·{' '}
-              <strong className="font-mono-num text-[#15803d]">
-                {LATEST_OFFICIAL_CPI.foodInflationMoM.toFixed(2)}% MoM
+              · MPR{' '}
+              <strong className="font-mono-num text-[#1d1d1f]">
+                {LATEST_OFFICIAL_CPI.cbnMpr.toFixed(1)}%
               </strong>{' '}
-              · {activeRegion.state.replace(' State', '')} 14-staple basket:{' '}
+              · NFEM{' '}
+              <strong className="font-mono-num text-[#1d1d1f]">
+                ₦{LATEST_OFFICIAL_CPI.usdNgnOfficial.toLocaleString('en-NG')}/$
+              </strong>{' '}
+              · {activeRegion.state.replace(' State', '')} {commodities.length}-staple basket:{' '}
               <strong
                 className={`font-mono-num ${
                   basketInflation.basketMoMPct <= 0 ? 'text-[#15803d]' : 'text-[#b91c1c]'
@@ -300,10 +303,10 @@ export const HomeScreen: React.FC = () => {
 
         <button
           type="button"
-          onClick={() => navigateTo('commodity-detail')}
-          className="px-4 py-2 rounded-xl bg-[#00567c]/10 hover:bg-[#00567c] text-[#00567c] hover:text-white text-xs font-semibold transition-colors whitespace-nowrap self-start md:self-auto shrink-0 flex items-center gap-1.5"
+          onClick={() => navigateTo('commodity-detail', { entityId: 'inflation' })}
+          className="px-4 py-2.5 min-h-[42px] rounded-xl bg-[#00567c]/10 hover:bg-[#00567c] text-[#00567c] hover:text-white text-xs font-semibold transition-colors whitespace-nowrap self-start md:self-auto shrink-0 flex items-center gap-1.5"
         >
-          <span>Track Month-on-Month</span>
+          <span>Explore 2023–2026 Data</span>
           <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
         </button>
       </section>

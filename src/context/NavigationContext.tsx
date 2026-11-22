@@ -21,6 +21,7 @@ const VALID_SCREENS: ScreenType[] = [
   'data-mgmt',
   'account-security',
   'secure-account',
+  'usage-analytics',
 ];
 
 const VALID_PRICE_MAP_TABS: PriceMapTab[] = ['map', 'markets', 'basket'];
@@ -31,9 +32,18 @@ interface ParsedHashRoute {
   entityId?: string;
 }
 
+function getDefaultInitialScreen(): ScreenType {
+  if (typeof window === 'undefined') return 'landing';
+  try {
+    return localStorage.getItem('mp_onboarded') === '1' ? 'home' : 'landing';
+  } catch {
+    return 'landing';
+  }
+}
+
 function parseHashRoute(hashStr: string): ParsedHashRoute {
   const cleaned = hashStr.replace(/^#\/?/, '').trim();
-  if (!cleaned) return { screen: 'home' };
+  if (!cleaned) return { screen: getDefaultInitialScreen() };
 
   const [pathPart, queryPart] = cleaned.split('?');
   const segments = pathPart.split('/').filter(Boolean);

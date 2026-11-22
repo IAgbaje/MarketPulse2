@@ -17,7 +17,8 @@ export type ScreenType =
   | 'data-management'
   | 'data-mgmt'
   | 'account-security'
-  | 'secure-account';
+  | 'secure-account'
+  | 'usage-analytics';
 
 export type PriceMapTab = 'map' | 'markets' | 'basket';
 

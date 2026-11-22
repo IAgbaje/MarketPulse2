@@ -127,6 +127,10 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
         computedTitle = 'Keep Records Safe';
         breadcrumbParent = 'Settings';
         break;
+      case 'usage-analytics':
+        computedTitle = 'Usage Insights';
+        breadcrumbParent = 'Insights';
+        break;
       default:
         computedTitle = 'MarketPulse';
         break;
@@ -227,14 +231,14 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
       </div>
 
       {/* Right Zone: Search Trigger + Region Switcher + PWA + Profile */}
-      <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+      <div className="flex items-center gap-1 sm:gap-2.5 shrink-0">
         {/* Mobile/Tablet Search Icon Trigger */}
         <button
           id="top-search-btn"
           type="button"
           onClick={() => setCommandPaletteOpen(true)}
           aria-label="Find food or market"
-          className="lg:hidden min-w-[40px] min-h-[40px] rounded-full text-[#6e6e73] hover:bg-black/[0.05] flex items-center justify-center transition-colors shrink-0"
+          className="lg:hidden min-w-[44px] min-h-[44px] rounded-full text-[#6e6e73] hover:bg-black/[0.05] flex items-center justify-center transition-colors shrink-0"
         >
           <span className="material-symbols-outlined text-[20px]">search</span>
         </button>
@@ -247,7 +251,7 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
               value={activeRegion.id}
               onChange={(e) => setActiveRegionId(e.target.value)}
               aria-label="Choose your state"
-              className="appearance-none bg-white hover:bg-[#e8e8ed]/60 border border-black/[0.08] text-[#1d1d1f] text-xs font-semibold pl-7 pr-6 py-2 rounded-full cursor-pointer transition-colors outline-none max-w-[126px] sm:max-w-[160px] truncate shadow-2xs"
+              className="appearance-none bg-white hover:bg-[#e8e8ed]/60 border border-black/[0.08] text-[#1d1d1f] text-xs font-semibold pl-6 sm:pl-7 pr-5 sm:pr-6 py-2 min-h-[38px] rounded-full cursor-pointer transition-colors outline-none max-w-[112px] sm:max-w-[160px] truncate shadow-2xs"
             >
               {regions.map((r) => (
                 <option key={r.id} value={r.id}>

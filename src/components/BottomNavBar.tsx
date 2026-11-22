@@ -63,7 +63,7 @@ export const BottomNavBar: React.FC = () => {
     <nav
       id="bottom-navigation-bar"
       aria-label="Mobile Navigation"
-      className="lg:hidden fixed bottom-0 left-0 right-0 w-full glass-surface border-t border-slate-900/10 z-40 grid grid-cols-5 items-center px-1 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+      className="lg:hidden fixed bottom-0 left-0 right-0 w-full glass-surface border-t border-black/[0.08] z-40 grid grid-cols-5 items-center px-1 pt-1 pb-[max(0.35rem,env(safe-area-inset-bottom))] touch-manipulation"
     >
       {MOBILE_TABS.map((tab) => {
         const isActive = activeTab === tab.id;
@@ -74,7 +74,7 @@ export const BottomNavBar: React.FC = () => {
             type="button"
             onClick={() => navigateTo(tab.target)}
             aria-current={isActive ? 'page' : undefined}
-            className="flex flex-col items-center justify-center min-h-[48px] py-0.5 transition-colors active:scale-95 select-none"
+            className="flex flex-col items-center justify-center min-h-[48px] py-0.5 transition-colors active:scale-95 select-none touch-manipulation"
           >
             {/* Genuine Material 3 Active Icon Pill Indicator */}
             <span className="relative flex items-center justify-center w-14 h-7 rounded-full mb-0.5">

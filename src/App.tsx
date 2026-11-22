@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { AnimatePresence, motion, MotionConfig } from 'motion/react';
 import { ToastProvider } from './context/ToastContext';
 import { NavigationProvider } from './context/NavigationContext';
@@ -25,10 +25,61 @@ import { BudgetScreen } from './components/BudgetScreen';
 import { SetBudgetScreen } from './components/SetBudgetScreen';
 import { DataManagementScreen } from './components/DataManagementScreen';
 import { AccountSecurityScreen } from './components/AccountSecurityScreen';
+import { UsageAnalyticsScreen } from './components/UsageAnalyticsScreen';
 import { OfflineIndicator } from './components/OfflineIndicator';
+import { trackScreenView, trackSessionEnd, trackFeatureAction } from './lib/analytics';
 
 const MainScreenRouter: React.FC = () => {
-  const { currentScreen } = useMarketPulse();
+  const { currentScreen, activeRegion } = useMarketPulse();
+  const prevScreenRef = useRef<string | null>(null);
+  const prevRegionRef = useRef<string>(activeRegion.id);
+  const currentScreenRef = useRef<string>(currentScreen);
+  const currentRegionNameRef = useRef<string>(activeRegion.name);
+
+  currentScreenRef.current = currentScreen;
+  currentRegionNameRef.current = activeRegion.name;
+
+  // Track every landing view and screen-to-screen navigation journey
+  useEffect(() => {
+    const fromScreen = prevScreenRef.current;
+    trackScreenView({
+      screen: currentScreen,
+      fromScreen,
+      region: activeRegion.name,
+    });
+    prevScreenRef.current = currentScreen;
+  }, [currentScreen]);
+
+  // Track state switches across desktop & mobile browsers
+  useEffect(() => {
+    if (prevRegionRef.current !== activeRegion.id) {
+      prevRegionRef.current = activeRegion.id;
+      trackFeatureAction({
+        action: 'switch_state',
+        detail: activeRegion.name,
+        screen: currentScreenRef.current,
+        region: activeRegion.name,
+      });
+    }
+  }, [activeRegion.id, activeRegion.name]);
+
+  // Reliably flush session duration on pagehide / tab switch (iOS Safari + Android Chrome)
+  useEffect(() => {
+    const handleLeave = () => {
+      trackSessionEnd(currentScreenRef.current, currentRegionNameRef.current);
+    };
+    const handleVis = () => {
+      if (document.visibilityState === 'hidden') {
+        handleLeave();
+      }
+    };
+    window.addEventListener('pagehide', handleLeave);
+    document.addEventListener('visibilitychange', handleVis);
+    return () => {
+      window.removeEventListener('pagehide', handleLeave);
+      document.removeEventListener('visibilitychange', handleVis);
+    };
+  }, []);
 
   const renderScreen = () => {
     switch (currentScreen) {
@@ -67,6 +118,8 @@ const MainScreenRouter: React.FC = () => {
       case 'account-security':
       case 'secure-account':
         return <AccountSecurityScreen />;
+      case 'usage-analytics':
+        return <UsageAnalyticsScreen />;
       default:
         return <HomeScreen />;
     }
@@ -84,7 +137,7 @@ const MainScreenRouter: React.FC = () => {
     currentScreen === 'log-success';
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] relative flex flex-col selection:bg-[#d4e8f7] selection:text-[#00567c]">
+    <div className="min-h-screen min-h-[100dvh] bg-[#f5f5f7] text-[#1d1d1f] relative flex flex-col overflow-x-clip selection:bg-[#d4e8f7] selection:text-[#00567c]">
       {!isLanding && <DesktopSidebar />}
       <TopAppBar />
       <OfflineIndicator />
@@ -92,7 +145,7 @@ const MainScreenRouter: React.FC = () => {
       <CommandPalette />
       <ToastViewport />
 
-      <main className={`flex-1 w-full ${!isLanding ? 'lg:pl-64' : ''}`}>
+      <main className={`flex-1 w-full min-w-0 ${!isLanding ? 'lg:pl-64' : ''}`}>
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={currentScreen}
@@ -100,7 +153,7 @@ const MainScreenRouter: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.14, ease: [0.2, 0, 0, 1] }}
-            className="w-full"
+            className="w-full min-w-0"
           >
             {renderScreen()}
           </motion.div>

@@ -61,6 +61,8 @@ export const TripDetailPanel: React.FC<TripDetailPanelProps> = ({ trip, onDelete
     else if (lower.includes('egg')) selectCommodityById('eggs-crate');
     else if (lower.includes('beef') || lower.includes('meat')) selectCommodityById('beef-1kg');
     else if (lower.includes('chicken')) selectCommodityById('chicken-frozen-1kg');
+    else if (lower.includes('fish') || lower.includes('titus') || lower.includes('mackerel')) selectCommodityById('fish-titus-1kg');
+    else if (lower.includes('maize') || lower.includes('corn')) selectCommodityById('maize-paint');
     else if (lower.includes('yam')) selectCommodityById('yam-tuber');
     else if (lower.includes('onion')) selectCommodityById('onions-dry');
     else if (lower.includes('bread')) selectCommodityById('bread-sliced');

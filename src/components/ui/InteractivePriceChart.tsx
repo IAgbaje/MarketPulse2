@@ -12,23 +12,25 @@ interface InteractivePriceChartProps {
   labels: string[];
   datasets: ChartDataset[];
   priceMultiplier?: number;
+  onRangeChange?: (range: string) => void;
 }
 
-type TimeRangeKey = '3M' | '6M' | '9M' | '1Y';
+type TimeRangeKey = '6M' | '1Y' | '2Y' | 'ALL';
 
 const RANGE_OPTIONS: { key: TimeRangeKey; label: string; points: number }[] = [
-  { key: '3M', label: '3M', points: 3 },
   { key: '6M', label: '6M', points: 6 },
-  { key: '9M', label: '9M', points: 9 },
-  { key: '1Y', label: '12M (1Y)', points: 999 },
+  { key: '1Y', label: '1Y', points: 12 },
+  { key: '2Y', label: '2Y', points: 24 },
+  { key: 'ALL', label: '2023–26', points: 999 },
 ];
 
 export const InteractivePriceChart: React.FC<InteractivePriceChartProps> = ({
   labels,
   datasets,
   priceMultiplier = 1,
+  onRangeChange,
 }) => {
-  const [range, setRange] = useState<TimeRangeKey>('1Y');
+  const [range, setRange] = useState<TimeRangeKey>('ALL');
   const [hiddenSeries, setHiddenSeries] = useState<Record<string, boolean>>({});
   const [scrubIndex, setScrubIndex] = useState<number | null>(null);
   const svgContainerRef = useRef<HTMLDivElement | null>(null);
@@ -65,16 +67,16 @@ export const InteractivePriceChart: React.FC<InteractivePriceChartProps> = ({
     return vals;
   }, [scaledDatasets]);
 
-  const rawMin = activeValues.length ? Math.min(...activeValues) : 10000;
+  const rawMin = activeValues.length ? Math.min(...activeValues) : 1000;
   const rawMax = activeValues.length ? Math.max(...activeValues) : 50000;
-  const pad = Math.max(1000, Math.round((rawMax - rawMin) * 0.14));
+  const pad = Math.max(200, Math.round((rawMax - rawMin) * 0.12));
   const minVal = Math.max(0, rawMin - pad);
   const maxVal = rawMax + pad;
   const valRange = maxVal - minVal || 1;
 
-  // Logical coordinate space for crisp SVG rendering
-  const padLeft = 52;
-  const padRight = 16;
+  // Responsive SVG coordinate space
+  const padLeft = 54;
+  const padRight = 14;
   const padTop = 18;
   const padBottom = 30;
   const vbWidth = 620;
@@ -123,12 +125,13 @@ export const InteractivePriceChart: React.FC<InteractivePriceChartProps> = ({
 
   const toggleSeries = (label: string) => {
     const visibleCount = scaledDatasets.filter((d) => d.visible).length;
-    if (visibleCount <= 1 && !hiddenSeries[label]) return; // keep at least 1 series active
+    if (visibleCount <= 1 && !hiddenSeries[label]) return;
     setHiddenSeries((prev) => ({ ...prev, [label]: !prev[label] }));
   };
 
   const effectiveIdx = scrubIndex !== null ? Math.min(scrubIndex, visibleLabels.length - 1) : null;
   const activeScrubLabel = effectiveIdx !== null ? visibleLabels[effectiveIdx] : null;
+
   const activeScrubEntries = useMemo(() => {
     if (effectiveIdx === null) return [];
     return scaledDatasets
@@ -136,29 +139,51 @@ export const InteractivePriceChart: React.FC<InteractivePriceChartProps> = ({
       .map((d) => {
         const curVal = d.data[effectiveIdx] as number;
         const prevVal = effectiveIdx > 0 ? d.data[effectiveIdx - 1] : null;
+        const firstVal = d.data[0];
         const momPct =
           prevVal && prevVal > 0
             ? Number((((curVal - prevVal) / prevVal) * 100).toFixed(1))
+            : null;
+        const rangePct =
+          firstVal && firstVal > 0 && effectiveIdx > 0
+            ? Number((((curVal - firstVal) / firstVal) * 100).toFixed(1))
             : null;
         return {
           label: d.label,
           color: d.color,
           value: curVal,
           momPct,
+          rangePct,
         };
       });
   }, [effectiveIdx, scaledDatasets]);
 
   const primaryMoM = activeScrubEntries[0]?.momPct ?? null;
+  const primaryRangePct = activeScrubEntries[0]?.rangePct ?? null;
 
-  // Show evenly spaced X-axis labels so they never collide
-  const xLabelStep = visibleLabels.length > 7 ? 2 : 1;
+  // Smart X-axis label thinning across 6, 12, 24, or 47 months so labels never overlap on phones
+  const xLabelStep = useMemo(() => {
+    const len = visibleLabels.length;
+    if (len <= 6) return 1;
+    if (len <= 12) return 2;
+    if (len <= 24) return 4;
+    return 7;
+  }, [visibleLabels.length]);
+
+  const showAllDots = visibleLabels.length <= 14;
+
+  const formatYLabel = (val: number) => {
+    if (val >= 100000) return `₦${Math.round(val / 1000)}k`;
+    if (val >= 10000) return `₦${(val / 1000).toFixed(0)}k`;
+    if (val >= 1000) return `₦${(val / 1000).toFixed(1)}k`;
+    return `₦${Math.round(val)}`;
+  };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3.5">
       {/* Top Toolbar: Range Segmented Control & Hint */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex items-center bg-[#eef2f6] p-1 rounded-xl border border-slate-900/6">
+      <div className="flex flex-wrap items-center justify-between gap-2.5">
+        <div className="inline-grid grid-cols-4 bg-[#eef2f6] p-1 rounded-xl border border-black/[0.06] w-full sm:w-auto">
           {RANGE_OPTIONS.map((opt) => {
             const isActive = range === opt.key;
             return (
@@ -168,8 +193,9 @@ export const InteractivePriceChart: React.FC<InteractivePriceChartProps> = ({
                 onClick={() => {
                   setRange(opt.key);
                   setScrubIndex(null);
+                  onRangeChange?.(opt.key);
                 }}
-                className={`relative px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
+                className={`relative px-2.5 sm:px-3.5 py-1.5 min-h-[36px] rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
                   isActive ? 'text-[#003852]' : 'text-[#64748b] hover:text-[#111827]'
                 }`}
               >
@@ -177,7 +203,7 @@ export const InteractivePriceChart: React.FC<InteractivePriceChartProps> = ({
                   <motion.span
                     layoutId="chart-range-pill"
                     transition={{ type: 'spring', stiffness: 480, damping: 36 }}
-                    className="absolute inset-0 bg-white rounded-lg shadow-xs border border-slate-900/6"
+                    className="absolute inset-0 bg-white rounded-lg shadow-2xs border border-black/[0.06]"
                   />
                 )}
                 <span className="relative z-10">{opt.label}</span>
@@ -186,8 +212,9 @@ export const InteractivePriceChart: React.FC<InteractivePriceChartProps> = ({
           })}
         </div>
 
-        <span className="text-xs text-[#64748b] hidden sm:inline">
-          Hover or drag across the chart to inspect exact prices
+        <span className="text-xs text-[#6e6e73] hidden sm:inline">
+          Touch or hover across {visibleLabels[0]} – {visibleLabels[visibleLabels.length - 1]} to
+          inspect
         </span>
       </div>
 
@@ -201,25 +228,23 @@ export const InteractivePriceChart: React.FC<InteractivePriceChartProps> = ({
         }}
         onPointerLeave={() => setScrubIndex(null)}
         onPointerUp={() => setScrubIndex(null)}
-        className="relative w-full rounded-2xl bg-[#f6f8fb] border border-slate-900/8 p-2 sm:p-3 select-none touch-none cursor-crosshair"
+        className="relative w-full rounded-2xl bg-[#f6f8fb] border border-black/[0.06] p-2 sm:p-3 select-none touch-none cursor-crosshair overflow-hidden"
       >
-        {/* Floating Scrub Tooltip */}
+        {/* Floating Scrub Tooltip — Safe Left/Right Anchoring for Narrow 360px Phones */}
         {effectiveIdx !== null && activeScrubEntries.length > 0 && (
           <div
-            className="pointer-events-none absolute top-3 z-20 glass-card rounded-xl border border-slate-900/12 shadow-lg px-3 py-2.5 min-w-[175px] transition-all duration-75"
+            className="pointer-events-none absolute top-2.5 z-20 glass-card rounded-xl border border-black/[0.1] shadow-lg px-3 py-2.5 w-[186px] sm:w-[205px] transition-all duration-75"
             style={{
-              left:
-                effectiveIdx > visibleLabels.length * 0.62
-                  ? '12px'
-                  : `min(calc(${(getX(effectiveIdx) / vbWidth) * 100}% + 12px), calc(100% - 195px))`,
+              left: effectiveIdx > visibleLabels.length * 0.5 ? '10px' : undefined,
+              right: effectiveIdx <= visibleLabels.length * 0.5 ? '10px' : undefined,
             }}
           >
-            <div className="text-[11px] font-semibold text-[#64748b] mb-1.5">
+            <div className="text-[11px] font-bold text-[#00567c] mb-1.5">
               {activeScrubLabel}
             </div>
             <div className="space-y-1">
               {activeScrubEntries.map((entry) => (
-                <div key={entry.label} className="flex items-center justify-between gap-3 text-xs">
+                <div key={entry.label} className="flex items-center justify-between gap-2 text-[11px] sm:text-xs">
                   <span className="flex items-center gap-1.5 text-[#475569] truncate">
                     <span
                       className="w-2 h-2 rounded-full shrink-0"
@@ -228,21 +253,37 @@ export const InteractivePriceChart: React.FC<InteractivePriceChartProps> = ({
                     <span className="truncate">{entry.label.replace(' Market', '')}</span>
                   </span>
                   <span className="font-mono-num font-bold text-[#111827] whitespace-nowrap">
-                    ₦{entry.value.toLocaleString()}
+                    ₦{entry.value.toLocaleString('en-NG')}
                   </span>
                 </div>
               ))}
             </div>
-            {primaryMoM !== null && (
-              <div className="mt-1.5 pt-1.5 border-t border-slate-900/8 flex items-center justify-between text-[11px]">
-                <span className="text-[#64748b]">Month-on-Month</span>
-                <span
-                  className={`font-mono-num font-bold ${
-                    primaryMoM <= 0 ? 'text-[#15803d]' : 'text-[#b91c1c]'
-                  }`}
-                >
-                  {primaryMoM > 0 ? `+${primaryMoM}%` : `${primaryMoM}%`}
-                </span>
+            {(primaryMoM !== null || primaryRangePct !== null) && (
+              <div className="mt-1.5 pt-1.5 border-t border-black/[0.08] space-y-0.5 text-[11px]">
+                {primaryMoM !== null && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-[#6e6e73]">MoM</span>
+                    <span
+                      className={`font-mono-num font-bold ${
+                        primaryMoM <= 0 ? 'text-[#15803d]' : 'text-[#b91c1c]'
+                      }`}
+                    >
+                      {primaryMoM > 0 ? `+${primaryMoM}%` : `${primaryMoM}%`}
+                    </span>
+                  </div>
+                )}
+                {primaryRangePct !== null && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-[#6e6e73]">Since {visibleLabels[0]}</span>
+                    <span
+                      className={`font-mono-num font-bold ${
+                        primaryRangePct <= 0 ? 'text-[#15803d]' : 'text-[#b91c1c]'
+                      }`}
+                    >
+                      {primaryRangePct > 0 ? `+${primaryRangePct}%` : `${primaryRangePct}%`}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -250,13 +291,13 @@ export const InteractivePriceChart: React.FC<InteractivePriceChartProps> = ({
 
         <svg
           viewBox={`0 0 ${vbWidth} ${vbHeight}`}
-          className="w-full h-56 sm:h-64 overflow-visible"
+          className="w-full h-52 sm:h-64 overflow-visible"
           role="img"
-          aria-label="Interactive commodity price history chart"
+          aria-label="Interactive multi-year commodity price history chart"
         >
           <defs>
             <linearGradient id="mp-primary-area" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#00567c" stopOpacity="0.16" />
+              <stop offset="0%" stopColor="#00567c" stopOpacity="0.18" />
               <stop offset="100%" stopColor="#00567c" stopOpacity="0.0" />
             </linearGradient>
           </defs>
@@ -265,8 +306,6 @@ export const InteractivePriceChart: React.FC<InteractivePriceChartProps> = ({
           {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
             const y = padTop + plotH - ratio * plotH;
             const val = minVal + ratio * valRange;
-            const formatted =
-              val >= 1000 ? `₦${Math.round(val / 1000)}k` : `₦${Math.round(val)}`;
             return (
               <g key={ratio}>
                 <line
@@ -281,11 +320,11 @@ export const InteractivePriceChart: React.FC<InteractivePriceChartProps> = ({
                   x={padLeft - 8}
                   y={y + 4}
                   textAnchor="end"
-                  fontSize="11"
+                  fontSize="10.5"
                   fill="#64748b"
                   className="font-mono-num"
                 >
-                  {formatted}
+                  {formatYLabel(val)}
                 </text>
               </g>
             );
@@ -293,11 +332,12 @@ export const InteractivePriceChart: React.FC<InteractivePriceChartProps> = ({
 
           {/* X-Axis Labels */}
           {visibleLabels.map((lbl, idx) => {
+            const isLast = idx === visibleLabels.length - 1;
+            const isCloseToLast = visibleLabels.length - 1 - idx < Math.max(2, Math.floor(xLabelStep / 2));
             const show =
               idx === 0 ||
-              idx === visibleLabels.length - 1 ||
-              idx % xLabelStep === 0 ||
-              idx === effectiveIdx;
+              isLast ||
+              (!isCloseToLast && idx % xLabelStep === 0);
             if (!show) return null;
             const x = getX(idx);
             const isHighlighted = idx === effectiveIdx;
@@ -306,8 +346,8 @@ export const InteractivePriceChart: React.FC<InteractivePriceChartProps> = ({
                 key={`${lbl}-${idx}`}
                 x={x}
                 y={vbHeight - 8}
-                textAnchor="middle"
-                fontSize="11"
+                textAnchor={idx === 0 ? 'start' : isLast ? 'end' : 'middle'}
+                fontSize="10.5"
                 fontWeight={isHighlighted ? '700' : '500'}
                 fill={isHighlighted ? '#00567c' : '#64748b'}
               >
@@ -326,7 +366,7 @@ export const InteractivePriceChart: React.FC<InteractivePriceChartProps> = ({
               stroke="#00567c"
               strokeWidth="1.5"
               strokeDasharray="4 3"
-              opacity="0.65"
+              opacity="0.7"
             />
           )}
 
@@ -347,25 +387,26 @@ export const InteractivePriceChart: React.FC<InteractivePriceChartProps> = ({
                   d={buildSmoothPath(pts)}
                   fill="none"
                   stroke={ds.color}
-                  strokeWidth={isPrimary ? 2.75 : 2}
+                  strokeWidth={isPrimary ? 2.6 : 1.9}
                   strokeDasharray={isPrimary ? undefined : '5 3'}
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
                 {pts.map((p) => {
                   const isScrubbed = p.idx === effectiveIdx;
+                  if (!showAllDots && !isScrubbed && p.idx !== pts.length - 1) return null;
                   return (
                     <g key={p.idx}>
                       {isScrubbed && (
-                        <circle cx={p.x} cy={p.y} r="9" fill={ds.color} opacity="0.16" />
+                        <circle cx={p.x} cy={p.y} r="9" fill={ds.color} opacity="0.18" />
                       )}
                       <circle
                         cx={p.x}
                         cy={p.y}
-                        r={isScrubbed ? 5 : isPrimary ? 3.5 : 3}
+                        r={isScrubbed ? 5 : isPrimary ? 3.2 : 2.6}
                         fill="#ffffff"
                         stroke={ds.color}
-                        strokeWidth={isScrubbed ? 2.5 : 2}
+                        strokeWidth={isScrubbed ? 2.5 : 1.8}
                       />
                     </g>
                   );
@@ -383,17 +424,17 @@ export const InteractivePriceChart: React.FC<InteractivePriceChartProps> = ({
             key={ds.label}
             type="button"
             onClick={() => toggleSeries(ds.label)}
-            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+            className={`inline-flex items-center gap-2 px-3 py-1.5 min-h-[36px] rounded-xl text-xs font-semibold border transition-all ${
               ds.visible
-                ? 'bg-white border-slate-900/12 text-[#111827] shadow-2xs'
-                : 'bg-[#eef2f6] border-transparent text-[#64748b] opacity-60'
+                ? 'bg-white border-black/[0.1] text-[#1d1d1f] shadow-2xs'
+                : 'bg-[#eef2f6] border-transparent text-[#6e6e73] opacity-60'
             }`}
           >
             <span
               className="w-2.5 h-2.5 rounded-full shrink-0"
               style={{ backgroundColor: ds.visible ? ds.color : '#94a3b8' }}
             />
-            <span>{ds.label}</span>
+            <span className="truncate max-w-[160px]">{ds.label}</span>
           </button>
         ))}
       </div>

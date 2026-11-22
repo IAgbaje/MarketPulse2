@@ -93,6 +93,13 @@ export const DesktopSidebar: React.FC = () => {
       matchScreens: ['data-management', 'data-mgmt'],
     },
     {
+      id: 'analytics',
+      label: 'Usage Insights',
+      icon: 'bar_chart',
+      screen: 'usage-analytics',
+      matchScreens: ['usage-analytics'],
+    },
+    {
       id: 'tour',
       label: 'About MarketPulse',
       icon: 'public',

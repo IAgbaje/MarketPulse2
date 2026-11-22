@@ -1,394 +1,539 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { useMarketPulse } from '../context/MarketPulseContext';
+import {
+  LATEST_OFFICIAL_CPI,
+  NBS_CBN_MONTHLY_CPI,
+  getCommodityAnnualAverages,
+} from '../data/foodInflationData';
+import { trackFeatureAction } from '../lib/analytics';
+import { NIGERIAN_MARKETS_REGISTRY } from '../data/nigerianMarketsRegistry';
+import heroMarketImg from '../assets/images/hero_nigerian_market_1795349017011.jpg';
+import staplesCounterImg from '../assets/images/nigerian_staples_counter_1795349017492.jpg';
+
+const QUICK_STATES = ['lagos', 'abuja', 'kano', 'rivers', 'oyo', 'enugu'] as const;
 
 export const LandingPageScreen: React.FC = () => {
-  const { navigateTo } = useMarketPulse();
+  const {
+    navigateTo,
+    regions,
+    activeRegion,
+    setActiveRegionId,
+    commodities,
+    selectCommodityById,
+  } = useMarketPulse();
 
-  const handleOpenPriceMap = (tab: 'map' | 'markets' | 'basket' = 'map') => {
-    navigateTo('price-map', { tab });
+  const [heroImgFailed, setHeroImgFailed] = useState(false);
+  const [staplesImgFailed, setStaplesImgFailed] = useState(false);
+
+  const multiplier = activeRegion.priceMultiplier || 1;
+  const totalMappedMarkets = NIGERIAN_MARKETS_REGISTRY.length;
+
+  const markOnboarded = () => {
+    try {
+      localStorage.setItem('mp_onboarded', '1');
+    } catch {
+      // ignore
+    }
   };
 
+  const enterApp = (
+    destination: 'home' | 'price-map' | 'log-choice' | 'budget' | 'commodity-detail' | 'usage-analytics',
+    ctaName: string,
+    options?: { tab?: 'map' | 'markets' | 'basket'; entityId?: string }
+  ) => {
+    markOnboarded();
+    trackFeatureAction({
+      action: 'landing_cta_click',
+      detail: ctaName,
+      screen: 'landing',
+      region: activeRegion.name,
+    });
+    navigateTo(destination, options);
+  };
+
+  const handleStatePick = (regionId: string, label: string) => {
+    setActiveRegionId(regionId);
+    trackFeatureAction({
+      action: 'landing_state_pick',
+      detail: label,
+      screen: 'landing',
+      region: label,
+    });
+  };
+
+  // Live 2023 -> 2024 -> Nov 2026 showcase items computed directly from the authoritative dataset
+  const showcaseStaples = useMemo(() => {
+    const ids = ['rice-50kg', 'tomatoes-fresh', 'beans-oloyin', 'garri-white', 'eggs-crate', 'palm-oil-5l'];
+    return ids
+      .map((id) => commodities.find((c) => c.id === id))
+      .filter((c): c is NonNullable<typeof c> => Boolean(c))
+      .map((c) => {
+        const avgs = getCommodityAnnualAverages(c, multiplier);
+        const series = c.chartData.datasets[0]?.data || [];
+        const latest = Math.round(((series[series.length - 1] ?? c.latestPrice) * multiplier) / 50) * 50;
+        const jan23 = Math.round(((series[0] ?? c.latestPrice) * multiplier) / 50) * 50;
+        const jumpPct = jan23 ? Math.round(((latest - jan23) / jan23) * 100) : 0;
+        return {
+          commodity: c,
+          avg2023: avgs[2023],
+          avg2024: avgs[2024],
+          latest,
+          jumpPct,
+        };
+      });
+  }, [commodities, multiplier]);
+
+  const riceLatest = showcaseStaples[0]?.latest ?? 88500;
+  const tomatoLatest = showcaseStaples[1]?.latest ?? 41500;
+  const peak2024Food = useMemo(
+    () => Math.max(...NBS_CBN_MONTHLY_CPI.filter((m) => m.year === 2024).map((m) => m.foodInflationYoY)),
+    []
+  );
+
+  const shortStateName = activeRegion.state.replace(' State', '');
+
   return (
-    <div className="min-h-screen bg-[#f6f8fb] text-[#111827] overflow-x-hidden">
-      {/* Top Marketing Navigation — Clean 3-Zone Contract */}
-      <nav className="sticky top-0 z-50 glass-surface border-b border-slate-900/8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5 shrink-0">
-            <div className="w-9 h-9 rounded-xl bg-[#00567c] flex items-center justify-center text-white font-display font-extrabold text-lg shadow-2xs">
-              M
-            </div>
-            <span className="font-display font-extrabold text-xl tracking-tight text-[#00567c] whitespace-nowrap">
-              MarketPulse
-            </span>
-          </div>
+    <div className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] overflow-x-clip">
+      {/* Strict 3-Zone Top Bar Contract */}
+      <header className="sticky top-0 z-50 bg-[#f5f5f7]/90 backdrop-blur-xl border-b border-black/[0.06]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-4 sm:gap-8">
+          {/* Zone 1: Single-line Brand Wordmark */}
+          <button
+            type="button"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="font-display font-extrabold text-lg sm:text-xl tracking-tight text-[#00567c] whitespace-nowrap shrink-0"
+          >
+            MarketPulse
+          </button>
 
-          <div className="hidden md:flex items-center gap-8 text-sm font-semibold text-[#475569]">
-            <a
-              href="#how-it-works"
-              className="hover:text-[#00567c] transition-colors whitespace-nowrap"
-            >
-              How it works
+          {/* Zone 2: 4 Concise Single-Line Text Nav Links */}
+          <nav
+            aria-label="Landing Navigation"
+            className="hidden md:flex items-center gap-7 text-sm font-medium text-[#48484a]"
+          >
+            <a href="#start-journey" className="hover:text-[#00567c] transition-colors whitespace-nowrap shrink-0">
+              Explore
             </a>
-            <a
-              href="#live-map-preview"
-              className="hover:text-[#00567c] transition-colors whitespace-nowrap"
-            >
-              Price Map
+            <a href="#multi-year-data" className="hover:text-[#00567c] transition-colors whitespace-nowrap shrink-0">
+              2023–2026 Data
             </a>
-            <a
-              href="#privacy-trust"
-              className="hover:text-[#00567c] transition-colors whitespace-nowrap"
-            >
-              Privacy
+            <a href="#built-for-nigeria" className="hover:text-[#00567c] transition-colors whitespace-nowrap shrink-0">
+              How It Works
             </a>
-          </div>
-
-          <div className="flex items-center gap-3 shrink-0">
             <button
               type="button"
-              onClick={() => navigateTo('home')}
-              className="hidden sm:inline-flex text-sm font-semibold text-[#475569] hover:text-[#00567c] px-2 py-2 transition-colors whitespace-nowrap"
+              onClick={() => enterApp('usage-analytics', 'nav_analytics')}
+              className="hover:text-[#00567c] transition-colors whitespace-nowrap shrink-0"
             >
-              Open Dashboard
+              Usage Insights
             </button>
+          </nav>
+
+          {/* Zone 3: Single Primary Action */}
+          <div className="shrink-0">
             <button
-              id="landing-nav-log-btn"
+              id="landing-nav-open-btn"
               type="button"
-              onClick={() => navigateTo('log-choice')}
-              className="min-h-[40px] bg-[#00567c] hover:bg-[#003e5a] text-white text-xs sm:text-sm font-semibold px-4 sm:px-5 py-2 rounded-xl transition-colors whitespace-nowrap shrink-0"
+              onClick={() => enterApp('home', 'nav_open_app')}
+              className="min-h-[40px] sm:min-h-[42px] bg-[#00567c] hover:bg-[#004361] text-white text-xs sm:text-sm font-semibold px-4 sm:px-5 py-2 rounded-xl transition-colors whitespace-nowrap shrink-0"
             >
-              Log First Trip
+              Open App
             </button>
           </div>
         </div>
-      </nav>
+      </header>
 
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-[#00567c] via-[#003e5a] to-[#0f172a] text-white pt-14 pb-24 lg:pt-20 lg:pb-32 hero-clip">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            {/* Hero Text */}
-            <div className="lg:col-span-7 space-y-6">
-              <div className="text-xs font-bold uppercase tracking-[0.14em] text-[#d4e8f7]">
-                No account needed · Works offline · Free for households
+      {/* Hero Section — Balanced 2-Column Split + Full-Width Live Pulse Strip */}
+      <section className="pt-8 pb-10 sm:pt-12 sm:pb-14 lg:pt-16 lg:pb-18">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 lg:space-y-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-stretch">
+            {/* Left Copy & Instant State-Aware Journey Control */}
+            <div className="lg:col-span-7 flex flex-col justify-between space-y-6">
+              <div className="space-y-4 sm:space-y-5">
+                <p className="text-xs sm:text-[13px] font-medium text-[#6e6e73] flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span className="font-semibold text-[#00567c]">All 36 States &amp; FCT Abuja</span>
+                  <span aria-hidden="true">·</span>
+                  <span>NBS &amp; CBN Data (2023–2026)</span>
+                  <span aria-hidden="true">·</span>
+                  <span>No Sign-Up Needed</span>
+                </p>
+
+                <h1
+                  className="font-display font-extrabold tracking-tight text-[#1d1d1f] leading-[1.08]"
+                  style={{ fontSize: 'clamp(2.1rem, 4.3vw, 3.55rem)', textWrap: 'balance' }}
+                >
+                  Know what food really costs at your market before you leave home.
+                </h1>
+
+                <p className="text-[15px] sm:text-base lg:text-lg text-[#48484a] max-w-2xl leading-relaxed">
+                  Compare prices across {totalMappedMarkets}+ Nigerian open markets and
+                  supermarkets, inspect official NBS &amp; CBN food, fuel, and FX trends since
+                  2023, and track every naira of your household food budget.
+                </p>
               </div>
 
-              <h1
-                className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.08]"
-                style={{ textWrap: 'balance' }}
-              >
-                Know what groceries really cost — at your market, this week.
-              </h1>
+              {/* Instant State Picker + Single Primary CTA */}
+              <div className="bg-white rounded-2xl p-4 sm:p-5 border border-black/[0.07] space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <label
+                    htmlFor="landing-state-select"
+                    className="text-xs font-semibold text-[#1d1d1f]"
+                  >
+                    1. Pick your state to personalize prices immediately
+                  </label>
+                  <select
+                    id="landing-state-select"
+                    value={activeRegion.id}
+                    onChange={(e) => {
+                      const chosen = regions.find((r) => r.id === e.target.value);
+                      if (chosen) handleStatePick(chosen.id, chosen.name);
+                    }}
+                    className="bg-[#f5f5f7] border border-black/[0.08] rounded-xl px-3 py-2 text-xs sm:text-sm font-semibold text-[#1d1d1f] outline-none focus:border-[#00567c] min-h-[42px]"
+                  >
+                    {regions.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.state} ({r.markets[0]})
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <p className="text-base sm:text-lg text-[#d4e8f7]/90 max-w-2xl leading-relaxed">
-                Track household grocery spending, separate market inflation from volume changes, and
-                compare live crowdsourced prices across Nigerian markets.
-              </p>
+                {/* Quick Popular States Row */}
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+                  {QUICK_STATES.map((id) => {
+                    const reg = regions.find((r) => r.id === id);
+                    if (!reg) return null;
+                    const active = activeRegion.id === reg.id;
+                    return (
+                      <button
+                        key={reg.id}
+                        type="button"
+                        onClick={() => handleStatePick(reg.id, reg.name)}
+                        className={`px-3 py-1.5 min-h-[36px] rounded-lg text-xs font-semibold transition-colors whitespace-nowrap shrink-0 ${
+                          active
+                            ? 'bg-[#00567c] text-white'
+                            : 'bg-[#f5f5f7] text-[#3a3a3c] hover:bg-[#e8e8ed]'
+                        }`}
+                      >
+                        {reg.state.replace(' State', '').replace('Federal Capital Territory', 'Abuja')}
+                      </button>
+                    );
+                  })}
+                </div>
 
-              <div className="pt-2 flex flex-col sm:flex-row gap-3.5">
-                <button
-                  id="landing-hero-log-btn"
-                  type="button"
-                  onClick={() => navigateTo('log-choice')}
-                  className="min-h-[52px] bg-white text-[#00567c] hover:bg-[#f6f8fb] font-bold text-sm sm:text-base px-7 py-3.5 rounded-xl shadow-lg transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
-                >
-                  <span>Log your first trip</span>
-                  <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
-                </button>
-                <button
-                  id="landing-hero-map-btn"
-                  type="button"
-                  onClick={() => handleOpenPriceMap('map')}
-                  className="min-h-[52px] bg-white/10 hover:bg-white/20 text-white border border-white/25 font-semibold text-sm sm:text-base px-6 py-3.5 rounded-xl backdrop-blur-xs transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
-                >
-                  <span className="material-symbols-outlined text-[20px]">map</span>
-                  <span>Explore Price Map</span>
-                </button>
+                {/* Primary Conversion CTA + Clean Secondary Text Link */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-1">
+                  <button
+                    id="landing-hero-primary-btn"
+                    type="button"
+                    onClick={() => enterApp('home', 'hero_enter_state_dashboard')}
+                    className="min-h-[48px] flex-1 bg-[#00567c] hover:bg-[#004361] text-white font-semibold text-sm sm:text-[15px] px-6 py-3 rounded-xl transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
+                  >
+                    <span>Explore {shortStateName} Market Prices</span>
+                    <span className="material-symbols-outlined text-[19px]">arrow_forward</span>
+                  </button>
+                  <button
+                    id="landing-hero-inflation-btn"
+                    type="button"
+                    onClick={() =>
+                      enterApp('commodity-detail', 'hero_open_nbs_cbn_2023_2026', {
+                        entityId: 'inflation',
+                      })
+                    }
+                    className="min-h-[48px] px-4 py-3 text-sm font-semibold text-[#00567c] hover:bg-[#eef6fb] rounded-xl transition-colors whitespace-nowrap text-center"
+                  >
+                    View 2023–2026 NBS/CBN Data
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* Hero Interactive Product Preview */}
-            <div className="lg:col-span-5 relative flex justify-center">
-              <div className="w-full max-w-[350px] bg-white rounded-3xl p-4 shadow-2xl border border-slate-900/12 text-[#111827] space-y-4">
-                <div className="flex justify-between items-center pb-3 border-b border-slate-900/8">
-                  <div className="flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-lg bg-[#00567c] text-white text-xs font-display font-bold flex items-center justify-center">
-                      M
-                    </span>
-                    <span className="font-display font-bold text-sm text-[#111827]">
-                      Lagos Market Snapshot
-                    </span>
+            {/* Right Dominant Visual Anchor — Editorial Nigerian Market Photography */}
+            <div className="lg:col-span-5">
+              <div className="relative w-full h-72 sm:h-96 lg:h-full min-h-[320px] rounded-2xl overflow-hidden border border-black/[0.08] bg-gradient-to-br from-[#00567c] to-[#00344d]">
+                {!heroImgFailed ? (
+                  <img
+                    src={heroMarketImg}
+                    alt="Fresh Nigerian market stall displaying ripe tomatoes, yams, local rice and beans"
+                    referrerPolicy="no-referrer"
+                    onError={() => setHeroImgFailed(true)}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center text-white/90 p-6 text-center">
+                    <span className="material-symbols-outlined text-5xl mb-2">storefront</span>
+                    <span className="font-display font-bold text-lg">Nigerian Market Intelligence</span>
                   </div>
-                  <span className="text-[11px] font-semibold text-[#64748b] font-mono-num">
-                    Oct 14
+                )}
+
+                {/* Measured Contrast Scrim + Dynamic State Snapshot Overlay */}
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/50 to-transparent p-5 sm:p-6 text-white space-y-2.5">
+                  <div className="text-xs text-white/80 font-medium">
+                    {activeRegion.name} · {activeRegion.markets[0]} · {LATEST_OFFICIAL_CPI.month}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <div className="text-[11px] text-white/75">Local Rice (50kg)</div>
+                      <div className="font-display font-mono-num text-lg sm:text-xl font-bold">
+                        ₦{riceLatest.toLocaleString('en-NG')}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[11px] text-white/75">Tomatoes (Basket)</div>
+                      <div className="font-display font-mono-num text-lg sm:text-xl font-bold">
+                        ₦{tomatoLatest.toLocaleString('en-NG')}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Full-Width 4-Column Official NBS & CBN Pulse Strip */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <button
+              type="button"
+              onClick={() =>
+                enterApp('commodity-detail', 'pulse_food_inflation', { entityId: 'inflation' })
+              }
+              className="text-left bg-white hover:border-[#00567c]/35 rounded-2xl p-4 sm:p-5 border border-black/[0.06] transition-colors space-y-1"
+            >
+              <div className="text-xs text-[#6e6e73]">NBS Food Inflation ({LATEST_OFFICIAL_CPI.month})</div>
+              <div className="font-display font-mono-num text-2xl sm:text-3xl font-extrabold text-[#1d1d1f]">
+                {LATEST_OFFICIAL_CPI.foodInflationYoY.toFixed(2)}%
+              </div>
+              <div className="text-xs text-[#15803d] font-medium">
+                Down from {peak2024Food.toFixed(1)}% in 2024
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                enterApp('commodity-detail', 'pulse_cbn_rates', { entityId: 'inflation' })
+              }
+              className="text-left bg-white hover:border-[#00567c]/35 rounded-2xl p-4 sm:p-5 border border-black/[0.06] transition-colors space-y-1"
+            >
+              <div className="text-xs text-[#6e6e73]">CBN MPR · Official FX</div>
+              <div className="font-display font-mono-num text-2xl sm:text-3xl font-extrabold text-[#1d1d1f]">
+                {LATEST_OFFICIAL_CPI.cbnMpr.toFixed(1)}%
+              </div>
+              <div className="text-xs text-[#48484a] font-mono-num">
+                ₦{LATEST_OFFICIAL_CPI.usdNgnOfficial.toLocaleString('en-NG')}/$ · $
+                {LATEST_OFFICIAL_CPI.externalReservesUsdBn.toFixed(1)}B Res.
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                enterApp('commodity-detail', 'pulse_fuel_gas', { entityId: 'inflation' })
+              }
+              className="text-left bg-white hover:border-[#00567c]/35 rounded-2xl p-4 sm:p-5 border border-black/[0.06] transition-colors space-y-1"
+            >
+              <div className="text-xs text-[#6e6e73]">Petrol (PMS) · Gas 12.5kg</div>
+              <div className="font-display font-mono-num text-2xl sm:text-3xl font-extrabold text-[#1d1d1f]">
+                ₦{LATEST_OFFICIAL_CPI.petrolPmsPerLitre.toLocaleString('en-NG')}
+                <span className="text-sm font-semibold text-[#6e6e73]">/L</span>
+              </div>
+              <div className="text-xs text-[#48484a] font-mono-num">
+                LPG ₦{LATEST_OFFICIAL_CPI.cookingGas125kg.toLocaleString('en-NG')} · 47M tracked
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => enterApp('price-map', 'pulse_mapped_markets', { tab: 'markets' })}
+              className="text-left bg-white hover:border-[#00567c]/35 rounded-2xl p-4 sm:p-5 border border-black/[0.06] transition-colors space-y-1"
+            >
+              <div className="text-xs text-[#6e6e73]">Nationwide Directory</div>
+              <div className="font-display font-mono-num text-2xl sm:text-3xl font-extrabold text-[#00567c]">
+                {totalMappedMarkets}+
+              </div>
+              <div className="text-xs text-[#48484a]">
+                Open markets &amp; supermarkets mapped
+              </div>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 2: Smooth 1-Tap User Journeys */}
+      <section
+        id="start-journey"
+        className="py-12 sm:py-16 lg:py-20 bg-white border-y border-black/[0.06]"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 sm:space-y-10">
+          <div className="max-w-2xl space-y-2">
+            <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#1d1d1f]">
+              Jump straight into what you need today
+            </h2>
+            <p className="text-sm sm:text-base text-[#6e6e73] leading-relaxed">
+              No sign-up wall or onboarding maze. Pick a task below and start immediately with{' '}
+              <strong className="text-[#1d1d1f]">{activeRegion.name}</strong> preloaded.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+            {[
+              {
+                num: '01.',
+                title: 'Compare nearby markets & get directions',
+                body: `Browse ${activeRegion.markets.slice(0, 3).join(', ')} and 290+ open markets & supermarkets on Google Maps before buying.`,
+                cta: 'Open Live Price Map',
+                onClick: () => enterApp('price-map', 'journey_price_map', { tab: 'map' }),
+              },
+              {
+                num: '02.',
+                title: 'Inspect 2023–2026 NBS & CBN inflation data',
+                body: 'Track 47 months of Nigerian food prices, CPI inflation, CBN MPR, official NFEM FX, petrol, diesel, and 12.5kg cooking gas.',
+                cta: 'Open 2023–2026 Observatory',
+                onClick: () =>
+                  enterApp('commodity-detail', 'journey_inflation_2023_2026', {
+                    entityId: 'inflation',
+                  }),
+              },
+              {
+                num: '03.',
+                title: 'Record today’s market trip in seconds',
+                body: 'Log items using everyday Nigerian units (derica, paint rubber, basket, tuber, crate) or snap your paper receipt.',
+                cta: 'Record a Market Run',
+                onClick: () => enterApp('log-choice', 'journey_log_trip'),
+              },
+              {
+                num: '04.',
+                title: 'See why your food budget moved',
+                body: 'Separate market price inflation from buying extra items so your household stays ahead of monthly food costs.',
+                cta: 'Open Food Budget',
+                onClick: () => enterApp('budget', 'journey_budget'),
+              },
+            ].map((item) => (
+              <button
+                key={item.num}
+                type="button"
+                onClick={item.onClick}
+                className="group text-left bg-[#f5f5f7] hover:bg-[#eef6fb] rounded-2xl p-5 sm:p-6 border border-black/[0.06] hover:border-[#00567c]/30 transition-colors flex flex-col justify-between gap-4"
+              >
+                <div className="space-y-2">
+                  <div className="font-display font-bold text-base sm:text-lg text-[#1d1d1f]">
+                    <span className="text-[#00567c] mr-1.5 font-mono-num">{item.num}</span>
+                    {item.title}
+                  </div>
+                  <p className="text-sm text-[#48484a] leading-relaxed">{item.body}</p>
+                </div>
+                <div className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#00567c]">
+                  <span>{item.cta}</span>
+                  <span className="material-symbols-outlined text-[18px] transition-transform group-hover:translate-x-0.5">
+                    arrow_forward
                   </span>
                 </div>
-
-                {/* Mini Budget Pace Card */}
-                <div className="bg-[#f6f8fb] p-4 rounded-2xl border border-slate-900/8 space-y-2">
-                  <div className="flex justify-between items-center text-[11px] font-bold text-[#64748b] uppercase tracking-wider">
-                    <span>Monthly Budget Pace</span>
-                    <span className="text-[#00567c] font-mono-num">64%</span>
-                  </div>
-                  <div className="font-display font-mono-num text-2xl font-extrabold text-[#111827]">
-                    ₦77,400{' '}
-                    <span className="text-xs font-medium text-[#64748b]">/ ₦120,000</span>
-                  </div>
-                  <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                    <div className="w-[64%] bg-[#00567c] h-full rounded-full" />
-                  </div>
-                </div>
-
-                {/* Live Price Rows */}
-                <div className="space-y-2">
-                  <div className="text-xs font-bold text-[#64748b] uppercase tracking-wider">
-                    Notable Movers
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => navigateTo('commodity-detail', { entityId: 'rice-50kg' })}
-                    className="w-full text-left bg-white p-3 rounded-xl border border-slate-900/10 flex justify-between items-center hover:border-[#00567c] transition-colors"
-                  >
-                    <div>
-                      <div className="text-xs font-bold text-[#111827]">Rice (50kg Bag)</div>
-                      <div className="text-[11px] text-[#64748b]">Mile 12 · 14 reports</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-xs font-bold font-mono-num text-[#111827]">₦42,500</div>
-                      <div className="text-[11px] font-semibold text-[#15803d] font-mono-num">
-                        ↓ 4%
-                      </div>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => navigateTo('commodity-detail', { entityId: 'tomatoes-fresh' })}
-                    className="w-full text-left bg-white p-3 rounded-xl border border-slate-900/10 flex justify-between items-center hover:border-[#00567c] transition-colors"
-                  >
-                    <div>
-                      <div className="text-xs font-bold text-[#111827]">Tomatoes (Basket)</div>
-                      <div className="text-[11px] text-[#64748b]">Mile 12 · 11 reports</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-xs font-bold font-mono-num text-[#111827]">₦18,500</div>
-                      <div className="text-[11px] font-semibold text-[#b91c1c] font-mono-num">
-                        ↑ 12%
-                      </div>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleOpenPriceMap('basket')}
-                    className="w-full text-left bg-[#d4e8f7]/45 p-3 rounded-xl border border-[#00567c]/15 flex justify-between items-center hover:bg-[#d4e8f7]/70 transition-colors"
-                  >
-                    <div>
-                      <div className="text-xs font-bold text-[#00567c]">
-                        Cheapest Basket Nearby
-                      </div>
-                      <div className="text-[11px] text-[#334155]">
-                        Mile 12 saves ₦3,300 vs usual
-                      </div>
-                    </div>
-                    <span className="material-symbols-outlined text-[#00567c] text-[18px]">
-                      arrow_forward
-                    </span>
-                  </button>
-                </div>
-              </div>
-            </div>
+              </button>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section id="how-it-works" className="py-16 lg:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-12">
-          <h2
-            className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-[#111827]"
-            style={{ textWrap: 'balance' }}
-          >
-            How MarketPulse Works
-          </h2>
-          <p className="mt-3 text-base text-[#64748b]">
-            Turn everyday market runs into personal budget clarity and verified local price
-            intelligence.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-2xl p-7 border border-slate-900/8 shadow-2xs space-y-4">
-            <div className="w-11 h-11 rounded-xl bg-[#d4e8f7] text-[#00567c] flex items-center justify-center font-display font-extrabold text-lg">
-              1
-            </div>
-            <h3 className="font-display text-lg font-bold text-[#111827]">
-              Snap or type your receipt
-            </h3>
-            <p className="text-[#64748b] leading-relaxed text-sm">
-              Log items in seconds with local Nigerian units including <em>derica</em>,{' '}
-              <em>paint rubber</em>, <em>basket</em>, and <em>tuber</em>.
-            </p>
-            <div className="bg-[#f6f8fb] p-3.5 rounded-xl border border-slate-900/8 flex items-center gap-2.5 text-xs font-semibold text-[#111827]">
-              <span className="material-symbols-outlined text-[#00567c] text-[18px]">
-                receipt_long
-              </span>
-              <span>&ldquo;1 paint Garri Ijebu — ₦2,800&rdquo;</span>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-7 border border-slate-900/8 shadow-2xs space-y-4">
-            <div className="w-11 h-11 rounded-xl bg-[#d4e8f7] text-[#00567c] flex items-center justify-center font-display font-extrabold text-lg">
-              2
-            </div>
-            <h3 className="font-display text-lg font-bold text-[#111827]">
-              See what changed &amp; why
-            </h3>
-            <p className="text-[#64748b] leading-relaxed text-sm">
-              Instantly separate price inflation from basket volume so you know why your monthly
-              spend moved.
-            </p>
-            <div className="bg-[#f6f8fb] p-3.5 rounded-xl border border-slate-900/8 flex justify-between items-center text-xs font-semibold font-mono-num">
-              <span className="text-[#b91c1c]">Prices: +₦9,200 ↑</span>
-              <span className="text-[#15803d]">Volume: -₦1,400 ↓</span>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-7 border border-slate-900/8 shadow-2xs space-y-4">
-            <div className="w-11 h-11 rounded-xl bg-[#d4e8f7] text-[#00567c] flex items-center justify-center font-display font-extrabold text-lg">
-              3
-            </div>
-            <h3 className="font-display text-lg font-bold text-[#111827]">
-              Find cheaper markets nearby
-            </h3>
-            <p className="text-[#64748b] leading-relaxed text-sm">
-              Compare your recurring 12-item household basket across nearby open markets and
-              supermarkets before you leave home.
-            </p>
-            <div className="bg-[#f6f8fb] p-3.5 rounded-xl border border-slate-900/8 flex justify-between items-center text-xs">
-              <span className="font-bold text-[#111827]">Mile 12 Market</span>
-              <span className="text-[#15803d] font-bold font-mono-num">Save ₦3,300</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Live Market Intelligence Preview */}
-      <section
-        id="live-map-preview"
-        className="py-16 lg:py-20 bg-white border-y border-slate-900/8"
-      >
+      {/* Section 3: Live 2023 → 2026 Staple Price Proof + Editorial Food Photography */}
+      <section id="multi-year-data" className="py-12 sm:py-16 lg:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-            {/* Left: Basket Comparison */}
-            <div className="space-y-5">
-              <div className="text-xs font-bold uppercase tracking-wider text-[#00567c]">
-                Live Market Intelligence
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-stretch">
+            {/* Left Editorial Visual */}
+            <div className="lg:col-span-5 flex flex-col gap-4">
+              <div className="relative flex-1 min-h-[260px] rounded-2xl overflow-hidden border border-black/[0.07] bg-white">
+                {!staplesImgFailed ? (
+                  <img
+                    src={staplesCounterImg}
+                    alt="Nigerian household food staples including palm oil, rice, oloyin beans, garri, eggs, tomatoes, onions and yam"
+                    referrerPolicy="no-referrer"
+                    onError={() => setStaplesImgFailed(true)}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-[#eef6fb] flex items-center justify-center p-8 text-[#00567c] font-display font-bold">
+                    16 Tracked Nigerian Household Staples
+                  </div>
+                )}
               </div>
-              <h2
-                className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-[#111827]"
-                style={{ textWrap: 'balance' }}
-              >
-                Where is your basket cheapest today?
-              </h2>
-              <p className="text-base text-[#64748b] leading-relaxed">
-                MarketPulse aggregates anonymous receipt logs from shoppers across Lagos, Abuja,
-                Kano, Ibadan, and Port Harcourt with transparent confidence tiers.
+              <p className="text-xs text-[#6e6e73] leading-relaxed">
+                Every staple includes 47 monthly data points from Jan 2023 to Nov 2026 grounded in
+                NBS Selected Food Price Watch and CBN CPI bulletins.
               </p>
-
-              <div className="bg-[#f6f8fb] rounded-2xl p-5 border border-slate-900/8 space-y-3">
-                <button
-                  type="button"
-                  onClick={() => handleOpenPriceMap('basket')}
-                  className="w-full text-left flex justify-between items-center p-3.5 rounded-xl bg-white border border-[#15803d]/35 hover:border-[#15803d] transition-colors"
-                >
-                  <div>
-                    <div className="font-bold text-sm text-[#111827]">
-                      #1 Mile 12 Market{' '}
-                      <span className="text-[11px] font-bold text-[#15803d] ml-1">Best Value</span>
-                    </div>
-                    <div className="text-xs text-[#64748b]">100% (12/12) items covered</div>
-                  </div>
-                  <div className="text-right font-mono-num">
-                    <div className="font-bold text-sm text-[#111827]">₦31,200</div>
-                    <div className="text-xs font-semibold text-[#15803d]">Save ₦3,300</div>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleOpenPriceMap('basket')}
-                  className="w-full text-left flex justify-between items-center p-3.5 rounded-xl bg-white border border-slate-900/8 hover:border-[#00567c] transition-colors"
-                >
-                  <div>
-                    <div className="font-bold text-sm text-[#111827]">#2 Shoprite Ikeja</div>
-                    <div className="text-xs text-[#64748b]">83% (10/12) items covered</div>
-                  </div>
-                  <div className="text-right font-mono-num">
-                    <div className="font-bold text-sm text-[#111827]">₦32,800</div>
-                    <div className="text-xs font-semibold text-[#15803d]">Save ₦1,700</div>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleOpenPriceMap('basket')}
-                  className="w-full min-h-[44px] py-2.5 bg-[#00567c] text-white font-semibold text-xs rounded-xl hover:bg-[#003e5a] transition-colors flex items-center justify-center gap-1.5"
-                >
-                  <span>Compare Your Own Basket</span>
-                  <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                </button>
-              </div>
             </div>
 
-            {/* Right: Interactive Choropleth Preview */}
-            <div className="bg-[#f6f8fb] rounded-2xl p-6 border border-slate-900/8 space-y-4">
-              <div className="flex justify-between items-start gap-3">
-                <div>
-                  <h3 className="font-display font-bold text-base text-[#111827]">
-                    Lagos State — Rice (50kg Bag)
-                  </h3>
-                  <p className="text-xs text-[#64748b]">30-day price movement by LGA</p>
+            {/* Right Interactive 2023 vs 2024 vs Nov 2026 Table */}
+            <div className="lg:col-span-7 flex flex-col justify-between space-y-5">
+              <div className="space-y-2">
+                <h2 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1d1d1f]">
+                  Four years of Nigerian food prices at a glance ({shortStateName})
+                </h2>
+                <p className="text-sm sm:text-base text-[#6e6e73]">
+                  Tap any item below to open its full 47-month interactive chart and compare local
+                  markets against the NBS national average.
+                </p>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-black/[0.06] overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-[#f5f5f7] text-[11px] font-semibold text-[#6e6e73] border-b border-black/[0.06]">
+                        <th className="py-3 px-4 whitespace-nowrap">Staple</th>
+                        <th className="py-3 px-3 text-right whitespace-nowrap hidden sm:table-cell">2023 Avg</th>
+                        <th className="py-3 px-3 text-right whitespace-nowrap hidden sm:table-cell">2024 Avg</th>
+                        <th className="py-3 px-3 text-right whitespace-nowrap">Nov 2026</th>
+                        <th className="py-3 px-4 text-right whitespace-nowrap">vs Jan 23</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-black/[0.05] text-xs sm:text-sm">
+                      {showcaseStaples.map(({ commodity, avg2023, avg2024, latest, jumpPct }) => (
+                        <tr
+                          key={commodity.id}
+                          onClick={() => {
+                            markOnboarded();
+                            trackFeatureAction({
+                              action: 'landing_staple_click',
+                              detail: commodity.id,
+                              screen: 'landing',
+                              region: activeRegion.name,
+                            });
+                            selectCommodityById(commodity.id, true);
+                          }}
+                          className="hover:bg-[#f5f5f7] cursor-pointer transition-colors"
+                        >
+                          <td className="py-3 px-4">
+                            <div className="font-semibold text-[#1d1d1f]">{commodity.name}</div>
+                            <div className="text-[11px] text-[#6e6e73]">{commodity.unitDescription}</div>
+                          </td>
+                          <td className="py-3 px-3 text-right font-mono-num text-[#6e6e73] whitespace-nowrap hidden sm:table-cell">
+                            ₦{avg2023.toLocaleString('en-NG')}
+                          </td>
+                          <td className="py-3 px-3 text-right font-mono-num text-[#6e6e73] whitespace-nowrap hidden sm:table-cell">
+                            ₦{avg2024.toLocaleString('en-NG')}
+                          </td>
+                          <td className="py-3 px-3 text-right font-mono-num font-bold text-[#1d1d1f] whitespace-nowrap">
+                            ₦{latest.toLocaleString('en-NG')}
+                          </td>
+                          <td className="py-3 px-4 text-right font-mono-num font-bold text-[#b91c1c] whitespace-nowrap">
+                            +{jumpPct}%
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-                <span className="font-mono-num text-xs font-bold text-[#b91c1c]">
-                  Avg: ₦43,200 (↑6%)
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <span className="text-xs text-[#6e6e73]">
+                  Showing 6 of {commodities.length} tracked staples · Prices adjusted for {activeRegion.name}
                 </span>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2.5">
-                {[
-                  { name: 'Ikeja', price: '₦45k', sub: '↑ 8% · 24 logs', cls: 'bg-[#fef2f2] border-[#b91c1c]/25 text-[#b91c1c]' },
-                  { name: 'Surulere', price: '₦42k', sub: '↓ 2% · 19 logs', cls: 'bg-[#ecfdf5] border-[#15803d]/25 text-[#15803d]' },
-                  { name: 'Eti-Osa', price: '₦48k', sub: '↑ 12% · 31 logs', cls: 'bg-[#fef2f2] border-[#b91c1c]/25 text-[#b91c1c]' },
-                  { name: 'Alimosho', price: '~₦43k', sub: '< 5 reports', cls: 'pattern-hatched bg-white border-slate-300 text-[#475569]' },
-                  { name: 'Kosofe', price: '₦41k', sub: '↓ 5% · 42 logs', cls: 'bg-[#ecfdf5] border-[#15803d]/50 text-[#15803d]' },
-                  { name: 'Ikorodu', price: 'No data', sub: '+ Log a trip', cls: 'pattern-dots bg-white border-dashed border-slate-400 text-[#64748b]' },
-                ].map((tile) => (
-                  <button
-                    key={tile.name}
-                    type="button"
-                    onClick={() => handleOpenPriceMap('map')}
-                    className={`text-left border rounded-xl p-3 flex flex-col justify-between min-h-[88px] hover:border-[#00567c] transition-colors ${tile.cls}`}
-                  >
-                    <span className="text-xs font-bold text-[#111827]">{tile.name}</span>
-                    <div>
-                      <div className="font-display font-mono-num text-sm font-extrabold">
-                        {tile.price}
-                      </div>
-                      <div className="text-[10px] font-semibold opacity-90">{tile.sub}</div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex items-center justify-between pt-2 border-t border-slate-900/8 text-xs">
-                <span className="text-[#64748b]">Striped = &lt;5 logs · Dotted = no data</span>
                 <button
                   type="button"
-                  onClick={() => handleOpenPriceMap('map')}
-                  className="text-[#00567c] font-semibold hover:underline"
+                  onClick={() => enterApp('commodity-detail', 'table_view_all_16_staples')}
+                  className="min-h-[42px] px-4 py-2 rounded-xl bg-[#00567c] hover:bg-[#004361] text-white text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap"
                 >
-                  Open Interactive Map →
+                  Inspect All {commodities.length} Staples
                 </button>
               </div>
             </div>
@@ -396,86 +541,87 @@ export const LandingPageScreen: React.FC = () => {
         </div>
       </section>
 
-      {/* Trust & Privacy Section */}
-      <section id="privacy-trust" className="py-16 lg:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-12">
-          <h2 className="font-display text-3xl font-extrabold tracking-tight text-[#111827]">
-            Built for Trust &amp; Offline Resilience
-          </h2>
-          <p className="mt-2.5 text-sm sm:text-base text-[#64748b]">
-            Engineered for Nigerian shoppers with patchy market reception and full data ownership.
-          </p>
-        </div>
+      {/* Section 4: Built for Everyday Nigerian Phone Browsers & Offline Reality */}
+      <section
+        id="built-for-nigeria"
+        className="py-12 sm:py-16 bg-white border-t border-black/[0.06]"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="max-w-2xl space-y-2">
+            <h2 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1d1d1f]">
+              Built for Nigerian markets and phone browsers
+            </h2>
+            <p className="text-sm sm:text-base text-[#6e6e73]">
+              Fast on mobile data, usable offline in crowded open markets, and respectful of your
+              privacy.
+            </p>
+          </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {[
-            {
-              icon: 'wifi_off',
-              title: 'Works offline',
-              body: 'Log prices inside busy markets with zero signal. Syncs automatically when back online.',
-            },
-            {
-              icon: 'no_accounts',
-              title: 'No account required',
-              body: 'Start logging immediately on your device. Add Google Cloud sync only when you want it.',
-            },
-            {
-              icon: 'download',
-              title: 'Your data is yours',
-              body: 'Export your complete shopping history to CSV or JSON anytime, or wipe it in one tap.',
-            },
-            {
-              icon: 'verified',
-              title: 'Honest data confidence',
-              body: 'We never invent estimates. Markets with fewer than 5 logs are clearly striped.',
-            },
-          ].map((item) => (
-            <div
-              key={item.title}
-              className="bg-white p-6 rounded-2xl border border-slate-900/8 shadow-2xs space-y-2.5"
-            >
-              <span className="material-symbols-outlined text-[#00567c] text-[28px] block">
-                {item.icon}
-              </span>
-              <h3 className="font-display font-bold text-base text-[#111827]">{item.title}</h3>
-              <p className="text-sm text-[#64748b] leading-relaxed">{item.body}</p>
-            </div>
-          ))}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {[
+              {
+                title: 'Works offline inside markets',
+                body: 'Record items when network bars disappear at Mile 12, Wuse, or Bodija. Everything saves locally first.',
+              },
+              {
+                title: 'Local Nigerian measurements',
+                body: 'Native support for derica, paint rubber, mudu, congo, basket, crate of 30, and 5L kegs — no awkward conversions.',
+              },
+              {
+                title: 'Credible NBS & CBN grounding',
+                body: 'Continuous Jan 2023 – Nov 2026 CPI, MPR, FX, PMS, Diesel, and LPG series paired with live shopper reports.',
+              },
+              {
+                title: 'Full ownership of your records',
+                body: 'No forced sign-in. Export your entire household history to CSV or JSON anytime in one tap.',
+              },
+            ].map((item) => (
+              <div
+                key={item.title}
+                className="p-5 rounded-2xl bg-[#f5f5f7] border border-black/[0.05] space-y-2"
+              >
+                <h3 className="font-display font-bold text-base text-[#1d1d1f]">{item.title}</h3>
+                <p className="text-sm text-[#48484a] leading-relaxed">{item.body}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-slate-900/8 py-10 text-xs text-[#64748b]">
+      {/* Quiet Footer */}
+      <footer className="bg-[#f5f5f7] border-t border-black/[0.06] py-8 text-xs text-[#6e6e73] pb-safe">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="font-display font-bold text-[#00567c] text-sm">MarketPulse Nigeria</div>
-          <div className="flex flex-wrap justify-center gap-6">
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
             <button
               type="button"
-              onClick={() => navigateTo('home')}
-              className="hover:text-[#00567c] font-medium"
+              onClick={() => enterApp('home', 'footer_dashboard')}
+              className="hover:text-[#00567c] font-medium py-1"
             >
               Dashboard
             </button>
             <button
               type="button"
-              onClick={() => handleOpenPriceMap('map')}
-              className="hover:text-[#00567c] font-medium"
+              onClick={() => enterApp('price-map', 'footer_price_map', { tab: 'map' })}
+              className="hover:text-[#00567c] font-medium py-1"
             >
               Price Map
             </button>
             <button
               type="button"
-              onClick={() => navigateTo('weekly-report')}
-              className="hover:text-[#00567c] font-medium"
+              onClick={() =>
+                enterApp('commodity-detail', 'footer_nbs_cbn', { entityId: 'inflation' })
+              }
+              className="hover:text-[#00567c] font-medium py-1"
             >
-              Weekly Report
+              NBS &amp; CBN Data
             </button>
             <button
               type="button"
-              onClick={() => navigateTo('data-mgmt')}
-              className="hover:text-[#00567c] font-medium"
+              onClick={() => enterApp('usage-analytics', 'footer_usage_analytics')}
+              className="hover:text-[#00567c] font-medium py-1"
             >
-              Data &amp; Privacy
+              Usage Insights
             </button>
           </div>
           <div>© 2026 MarketPulse · Built for Nigerian Households</div>
