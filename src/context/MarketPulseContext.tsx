@@ -321,8 +321,12 @@ export const MarketPulseProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   }, [currentScreen, routeEntityId, trips, commodities]);
 
-  // Firebase Auth listener
+  // Firebase Auth listener (gracefully skipped when Firebase env vars are not configured)
   useEffect(() => {
+    if (!auth) {
+      setIsAuthReady(true);
+      return;
+    }
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setFirebaseUser(user);
       setIsAuthReady(true);
@@ -390,6 +394,16 @@ export const MarketPulseProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const signInWithGoogle = async () => {
     setAuthError(null);
+    if (!auth || !googleProvider) {
+      const msg = 'Cloud sync is not configured on this deployment yet. Your records remain saved locally on this device.';
+      setAuthError(msg);
+      showToast({
+        message: 'Saved locally on this device',
+        description: 'Cloud backup requires Firebase environment variables on this host.',
+        tone: 'default',
+      });
+      return;
+    }
     try {
       await signInWithPopup(auth, googleProvider);
       showToast({
@@ -407,6 +421,7 @@ export const MarketPulseProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const signOutUser = async () => {
     setAuthError(null);
+    if (!auth) return;
     try {
       await signOut(auth);
       showToast({ message: 'Signed out of cloud sync', tone: 'default' });

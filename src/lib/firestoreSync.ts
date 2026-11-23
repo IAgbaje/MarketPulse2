@@ -36,6 +36,7 @@ const VALID_CATEGORIES: ItemCategory[] = [
 const VALID_ANNOTATIONS = ['history', 'community', 'unsure', 'outlier', 'none'] as const;
 
 export async function saveTripToFirestore(uid: string, trip: Trip): Promise<void> {
+  if (!db) return;
   const safeTripId = sanitizeId(trip.id);
   const tripPath = `trips/${safeTripId}`;
   try {
@@ -91,6 +92,7 @@ export async function saveTripToFirestore(uid: string, trip: Trip): Promise<void
 }
 
 export async function updateTripInFirestore(trip: Trip): Promise<void> {
+  if (!db) return;
   const safeTripId = sanitizeId(trip.id);
   try {
     await updateDoc(doc(db, 'trips', safeTripId), {
@@ -110,6 +112,7 @@ export async function updateTripInFirestore(trip: Trip): Promise<void> {
 }
 
 export async function deleteTripFromFirestore(trip: Trip): Promise<void> {
+  if (!db) return;
   const safeTripId = sanitizeId(trip.id);
   for (const item of trip.items) {
     const safeItemId = sanitizeId(item.id);
@@ -127,6 +130,7 @@ export async function deleteTripFromFirestore(trip: Trip): Promise<void> {
 }
 
 export async function updateBudgetInFirestore(uid: string, next: BudgetConfig): Promise<void> {
+  if (!db) return;
   try {
     await updateDoc(doc(db, 'users', uid, 'budgets', 'current'), {
       monthlyTarget: Math.max(0, Number(next.monthlyTarget) || 100000),
@@ -148,6 +152,7 @@ export async function updateBudgetInFirestore(uid: string, next: BudgetConfig): 
 }
 
 export async function updateBudgetSpendInFirestore(uid: string, nextBudget: BudgetConfig): Promise<void> {
+  if (!db) return;
   try {
     await updateDoc(doc(db, 'users', uid, 'budgets', 'current'), {
       spentSoFar: Math.max(0, Number(nextBudget.spentSoFar) || 0),
@@ -162,6 +167,7 @@ export async function updateBudgetSpendInFirestore(uid: string, nextBudget: Budg
 }
 
 export async function updateRegionInFirestore(uid: string, safeRegionId: string, newLocation: string): Promise<void> {
+  if (!db) return;
   try {
     await updateDoc(doc(db, 'users', uid), {
       activeRegionId: safeRegionId,
@@ -178,6 +184,7 @@ export async function updateProfileInFirestore(
   next: UserProfile,
   includePrivate: boolean
 ): Promise<void> {
+  if (!db) return;
   const safeName = sanitizeString(next.name, BLUEPRINT_CONSTRAINTS.NAME_MAX_LEN, 'MarketPulse Shopper');
   const initials = sanitizeString(
     safeName
@@ -230,6 +237,8 @@ interface BootstrapParams {
 }
 
 export function subscribeUserCloudData(params: BootstrapParams): () => void {
+  if (!db) return () => {};
+  const firestoreDb = db;
   const {
     firebaseUser,
     userProfile,
@@ -250,7 +259,7 @@ export function subscribeUserCloudData(params: BootstrapParams): () => void {
   let isCancelled = false;
 
   const run = async () => {
-    const userDocRef = doc(db, 'users', uid);
+    const userDocRef = doc(firestoreDb, 'users', uid);
     let userSnap;
     try {
       userSnap = await getDoc(userDocRef);
@@ -294,7 +303,7 @@ export function subscribeUserCloudData(params: BootstrapParams): () => void {
       }
     }
 
-    const privateDocRef = doc(db, 'users', uid, 'private', 'info');
+    const privateDocRef = doc(firestoreDb, 'users', uid, 'private', 'info');
     let privateSnap;
     try {
       privateSnap = await getDoc(privateDocRef);
@@ -323,7 +332,7 @@ export function subscribeUserCloudData(params: BootstrapParams): () => void {
       }
     }
 
-    const budgetDocRef = doc(db, 'users', uid, 'budgets', 'current');
+    const budgetDocRef = doc(firestoreDb, 'users', uid, 'budgets', 'current');
     let budgetSnap;
     try {
       budgetSnap = await getDoc(budgetDocRef);
@@ -354,7 +363,7 @@ export function subscribeUserCloudData(params: BootstrapParams): () => void {
       }
     }
 
-    const tripsQuery = query(collection(db, 'trips'), where('uid', '==', uid));
+    const tripsQuery = query(collection(firestoreDb, 'trips'), where('uid', '==', uid));
     let existingTripsSnap;
     try {
       existingTripsSnap = await getDocs(tripsQuery);
@@ -451,7 +460,7 @@ export function subscribeUserCloudData(params: BootstrapParams): () => void {
           let items: TripItem[] = [];
           try {
             const itemsSnap = await getDocs(
-              query(collection(db, 'trips', tripId, 'items'), where('uid', '==', uid))
+              query(collection(firestoreDb, 'trips', tripId, 'items'), where('uid', '==', uid))
             );
             items = itemsSnap.docs.map((iDoc) => {
               const iData = iDoc.data();

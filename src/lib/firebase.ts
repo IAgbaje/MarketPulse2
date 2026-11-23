@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
-import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
+import { initializeApp, type FirebaseApp } from 'firebase/app';
+import { getAuth, GoogleAuthProvider, type Auth } from 'firebase/auth';
+import { getFirestore, doc, getDocFromServer, type Firestore } from 'firebase/firestore';
 
 interface FirebaseAppletConfig {
   projectId: string;
@@ -21,20 +21,43 @@ const localConfigs = import.meta.glob<{ default: FirebaseAppletConfig }>('../../
 const localConfig = localConfigs['../../firebase-applet-config.json']?.default;
 
 const firebaseConfig: FirebaseAppletConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || localConfig?.apiKey || '',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || localConfig?.projectId || '',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || localConfig?.appId || '',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || localConfig?.authDomain || '',
+  apiKey: (import.meta.env.VITE_FIREBASE_API_KEY || localConfig?.apiKey || '').trim(),
+  projectId: (import.meta.env.VITE_FIREBASE_PROJECT_ID || localConfig?.projectId || '').trim(),
+  appId: (import.meta.env.VITE_FIREBASE_APP_ID || localConfig?.appId || '').trim(),
+  authDomain: (import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || localConfig?.authDomain || '').trim(),
   firestoreDatabaseId:
-    import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || localConfig?.firestoreDatabaseId || '(default)',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || localConfig?.storageBucket || '',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || localConfig?.messagingSenderId || '',
+    (import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || localConfig?.firestoreDatabaseId || '(default)').trim(),
+  storageBucket: (import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || localConfig?.storageBucket || '').trim(),
+  messagingSenderId: (import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || localConfig?.messagingSenderId || '').trim(),
 };
 
-const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
-export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
+export const isFirebaseConfigured = Boolean(
+  firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId
+);
+
+let appInstance: FirebaseApp | null = null;
+let dbInstance: Firestore | null = null;
+let authInstance: Auth | null = null;
+let googleProviderInstance: GoogleAuthProvider | null = null;
+
+if (isFirebaseConfigured) {
+  try {
+    appInstance = initializeApp(firebaseConfig);
+    dbInstance = getFirestore(appInstance, firebaseConfig.firestoreDatabaseId);
+    authInstance = getAuth(appInstance);
+    googleProviderInstance = new GoogleAuthProvider();
+  } catch (error) {
+    console.warn('Firebase initialization skipped; running in offline-first local mode.', error);
+    appInstance = null;
+    dbInstance = null;
+    authInstance = null;
+    googleProviderInstance = null;
+  }
+}
+
+export const db: Firestore | null = dbInstance;
+export const auth: Auth | null = authInstance;
+export const googleProvider: GoogleAuthProvider | null = googleProviderInstance;
 
 // Verbatim blueprint constraints for validation synchronicity
 export const BLUEPRINT_CONSTRAINTS = {
@@ -101,16 +124,17 @@ export function handleFirestoreError(
   operationType: OperationType,
   path: string | null
 ): never {
+  const currentUser = auth?.currentUser;
   const errInfo: FirestoreErrorInfo = {
     error: error instanceof Error ? error.message : String(error),
     authInfo: {
-      userId: auth.currentUser?.uid,
-      email: auth.currentUser?.email,
-      emailVerified: auth.currentUser?.emailVerified,
-      isAnonymous: auth.currentUser?.isAnonymous,
-      tenantId: auth.currentUser?.tenantId,
+      userId: currentUser?.uid,
+      email: currentUser?.email,
+      emailVerified: currentUser?.emailVerified,
+      isAnonymous: currentUser?.isAnonymous,
+      tenantId: currentUser?.tenantId,
       providerInfo:
-        auth.currentUser?.providerData?.map((provider) => ({
+        currentUser?.providerData?.map((provider) => ({
           providerId: provider.providerId,
           email: provider.email,
         })) || [],
@@ -123,6 +147,7 @@ export function handleFirestoreError(
 }
 
 async function testConnection() {
+  if (!db) return;
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
   } catch (error) {
@@ -132,4 +157,6 @@ async function testConnection() {
   }
 }
 
-testConnection();
+if (db) {
+  testConnection();
+}
