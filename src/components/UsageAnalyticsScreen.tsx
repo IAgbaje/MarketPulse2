@@ -1,9 +1,15 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   AnalyticsSummaryResponse,
+  fetchAdminAuthStatus,
   fetchAnalyticsSummary,
+  getGaMeasurementId,
+  loginAdminSession,
+  logoutAdminSession,
   resetAnalyticsData,
 } from '../lib/analytics';
+import { buildCsvDocument } from '../lib/csv';
+import { useMarketPulse } from '../context/MarketPulseContext';
 import { useToast } from '../context/ToastContext';
 
 const SCREEN_LABELS: Record<string, string> = {
@@ -23,7 +29,7 @@ const SCREEN_LABELS: Record<string, string> = {
   'data-management': 'Export & Data',
   'data-mgmt': 'Export & Data',
   'account-security': 'Keep Records Safe',
-  'usage-analytics': 'Usage Analytics',
+  'usage-analytics': 'Admin Insights',
 };
 
 function formatScreenName(key: string): string {
@@ -46,26 +52,86 @@ function formatTimeAgo(ts: number): string {
   return new Date(ts).toLocaleDateString('en-NG', { day: 'numeric', month: 'short' });
 }
 
+type GateState = 'checking' | 'unconfigured' | 'locked' | 'authorized';
+
 export const UsageAnalyticsScreen: React.FC = () => {
+  const { navigateTo } = useMarketPulse();
   const { showToast } = useToast();
+
+  const [gateState, setGateState] = useState<GateState>('checking');
   const [summary, setSummary] = useState<AnalyticsSummaryResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [accessCode, setAccessCode] = useState('');
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
 
-  const loadData = useCallback(async () => {
+  const gaMeasurementId = getGaMeasurementId();
+
+  const loadAuthorizedSummary = useCallback(async () => {
     setLoading(true);
-    const data = await fetchAnalyticsSummary();
-    setSummary(data);
+    const res = await fetchAnalyticsSummary();
+    if (res.status === 'ok' && res.data) {
+      setSummary(res.data);
+      setGateState('authorized');
+    } else if (res.status === 'unconfigured') {
+      setSummary(null);
+      setGateState('unconfigured');
+    } else {
+      setSummary(null);
+      setGateState('locked');
+    }
     setLoading(false);
   }, []);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    let active = true;
+    (async () => {
+      const status = await fetchAdminAuthStatus();
+      if (!active) return;
+      if (!status.configured) {
+        setGateState('unconfigured');
+        return;
+      }
+      if (!status.authenticated) {
+        setGateState('locked');
+        return;
+      }
+      await loadAuthorizedSummary();
+    })();
+    return () => {
+      active = false;
+    };
+  }, [loadAuthorizedSummary]);
+
+  const handleAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    if (!accessCode.trim()) {
+      setAuthError('Enter the admin access code.');
+      return;
+    }
+    setSubmitting(true);
+    const res = await loginAdminSession(accessCode);
+    setSubmitting(false);
+    if (!res.ok) {
+      setAuthError(res.error || 'Access denied.');
+      return;
+    }
+    setAccessCode('');
+    await loadAuthorizedSummary();
+  };
+
+  const handleAdminLogout = async () => {
+    await logoutAdminSession();
+    setSummary(null);
+    setGateState('locked');
+    showToast({ message: 'Signed out of Admin Insights', tone: 'info' });
+  };
 
   const handleExportCsv = () => {
     if (!summary) return;
-    const header = [
+    const headers = [
       'Timestamp',
       'EventType',
       'Screen',
@@ -77,23 +143,21 @@ export const UsageAnalyticsScreen: React.FC = () => {
       'OS',
       'Viewport',
       'State',
-    ].join(',');
-    const rows = summary.recentEvents.map((ev) =>
-      [
-        new Date(ev.ts).toISOString(),
-        ev.eventType,
-        ev.screen,
-        ev.fromScreen || '',
-        ev.action || '',
-        (ev.detail || '').replace(/,/g, ';'),
-        ev.deviceType,
-        ev.browser,
-        ev.os,
-        ev.viewport,
-        (ev.region || '').replace(/,/g, ';'),
-      ].join(',')
-    );
-    const csv = [header, ...rows].join('\n');
+    ];
+    const rows = summary.recentEvents.map((ev) => [
+      new Date(ev.ts).toISOString(),
+      ev.eventType,
+      ev.screen,
+      ev.fromScreen || '',
+      ev.action || '',
+      ev.detail || '',
+      ev.deviceType,
+      ev.browser,
+      ev.os,
+      ev.viewport,
+      ev.region || '',
+    ]);
+    const csv = buildCsvDocument(headers, rows);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -105,17 +169,110 @@ export const UsageAnalyticsScreen: React.FC = () => {
   };
 
   const handleReset = async () => {
-    await resetAnalyticsData();
+    const ok = await resetAnalyticsData();
     setConfirmReset(false);
-    await loadData();
-    showToast({ message: 'Usage counter reset cleanly', tone: 'info' });
+    if (ok) {
+      await loadAuthorizedSummary();
+      showToast({ message: 'Usage counter reset cleanly', tone: 'info' });
+    } else {
+      showToast({ message: 'Admin authorization required to reset analytics', tone: 'warning' });
+    }
   };
 
-  if (loading && !summary) {
+  if (gateState === 'checking') {
     return (
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 lg:pt-24 pb-24">
+      <div className="w-full max-w-lg mx-auto px-4 pt-24 pb-24">
         <div className="bg-white rounded-2xl p-8 border border-black/[0.06] text-center text-sm text-[#6e6e73]">
-          Loading visitor &amp; usage analytics...
+          Verifying admin session...
+        </div>
+      </div>
+    );
+  }
+
+  // Strictly locked gate for non-admin visitors
+  if (gateState === 'locked' || gateState === 'unconfigured') {
+    return (
+      <div className="w-full max-w-md mx-auto px-4 pt-24 lg:pt-28 pb-24">
+        <div className="bg-white rounded-2xl p-6 sm:p-7 border border-black/[0.07] shadow-xs space-y-5">
+          <div className="flex items-start gap-3.5">
+            <div className="w-11 h-11 rounded-xl bg-[#00567c]/10 text-[#00567c] flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined text-[22px]">admin_panel_settings</span>
+            </div>
+            <div>
+              <h1 className="font-display text-xl font-extrabold text-[#1d1d1f] tracking-tight">
+                Admin Access Only
+              </h1>
+              <p className="text-xs text-[#6e6e73] mt-1 leading-relaxed">
+                Platform usage insights are restricted to administrators and hidden from regular
+                shoppers.
+              </p>
+            </div>
+          </div>
+
+          {/* Google Analytics 4 Connection Indicator */}
+          <div className="rounded-xl bg-[#f5f5f7] border border-black/[0.05] p-3.5 text-xs space-y-1">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-semibold text-[#1d1d1f]">Google Analytics 4 (GA4)</span>
+              <span
+                className={`font-semibold ${
+                  gaMeasurementId ? 'text-[#15803d]' : 'text-[#6e6e73]'
+                }`}
+              >
+                {gaMeasurementId ? `Connected (${gaMeasurementId})` : 'Not configured'}
+              </span>
+            </div>
+            <p className="text-[#6e6e73] leading-relaxed">
+              {gaMeasurementId
+                ? 'Traffic, landing conversions, and feature usage are streaming privately to your Google Analytics 4 console.'
+                : 'Set VITE_GA_MEASUREMENT_ID in environment secrets to send all usage analytics directly to Google Analytics 4.'}
+            </p>
+          </div>
+
+          {gateState === 'locked' ? (
+            <form onSubmit={handleAdminLogin} className="space-y-3">
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="admin-access-code"
+                  className="block text-xs font-semibold text-[#1d1d1f]"
+                >
+                  Admin Access Code
+                </label>
+                <input
+                  id="admin-access-code"
+                  type="password"
+                  autoComplete="current-password"
+                  value={accessCode}
+                  onChange={(e) => setAccessCode(e.target.value)}
+                  placeholder="Enter server admin passcode"
+                  className="w-full h-11 px-3.5 rounded-xl bg-[#f5f5f7] border border-black/[0.08] text-sm text-[#1d1d1f] outline-none focus:border-[#00567c] focus:bg-white transition-colors"
+                />
+              </div>
+              {authError && (
+                <p className="text-xs font-medium text-[#b91c1c]">{authError}</p>
+              )}
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-[#00567c] hover:bg-[#004361] disabled:opacity-60 text-white text-sm font-semibold transition-colors"
+              >
+                {submitting ? 'Verifying...' : 'Unlock Admin Insights'}
+              </button>
+            </form>
+          ) : (
+            <div className="rounded-xl bg-[#eef6fb] border border-[#00567c]/15 p-3.5 text-xs text-[#003852] leading-relaxed">
+              Built-in Admin Insights is locked until{' '}
+              <code className="font-mono-num font-semibold">ADMIN_ACCESS_CODE</code> is set in your
+              server secrets. All public visitors remain blocked from viewing usage data.
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => navigateTo('home')}
+            className="w-full min-h-[42px] px-4 py-2 rounded-xl border border-black/[0.08] bg-white hover:bg-[#f5f5f7] text-xs font-semibold text-[#1d1d1f] transition-colors"
+          >
+            Return to MarketPulse
+          </button>
         </div>
       </div>
     );
@@ -123,30 +280,32 @@ export const UsageAnalyticsScreen: React.FC = () => {
 
   if (!summary) return null;
 
-  const maxScreenCount = Math.max(1, ...summary.topScreens.map((s) => s.count));
-  const maxTransitionCount = Math.max(1, ...summary.topTransitions.map((t) => t.count));
+  const topScreenMax = Math.max(1, summary.topScreens[0]?.count || 1);
+  const topTransitionMax = Math.max(1, summary.topTransitions[0]?.count || 1);
+  const topActionMax = Math.max(1, summary.topActions[0]?.count || 1);
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-[72px] lg:pt-24 pb-24 lg:pb-14 space-y-6">
-      {/* Page Header */}
-      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-3.5">
-        <div>
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 lg:pt-24 pb-24 lg:pb-14 space-y-6">
+      {/* Header */}
+      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="space-y-1">
           <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#1d1d1f] tracking-tight">
-            Visitor &amp; Usage Analytics
+            Admin Visitor &amp; Usage Insights
           </h1>
-          <p className="text-xs sm:text-sm text-[#6e6e73] mt-0.5">
-            Real-time anonymized traffic across desktop &amp; phone browsers · Storage:{' '}
-            <strong className="text-[#1d1d1f]">
-              {summary.source === 'server' ? 'Live Server Log' : 'Local Browser Mirror'}
-            </strong>
+          <p className="text-sm text-[#6e6e73]">
+            Private admin-only traffic across desktop &amp; phone browsers ·{' '}
+            <span className="font-semibold text-[#1d1d1f]">
+              {gaMeasurementId ? `GA4 Connected (${gaMeasurementId})` : 'Live Server Log'}
+            </span>
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            onClick={loadData}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 min-h-[40px] rounded-xl bg-white border border-black/[0.08] hover:bg-[#f2f2f7] text-xs font-semibold text-[#1d1d1f] transition-colors"
+            onClick={loadAuthorizedSummary}
+            disabled={loading}
+            className="min-h-[40px] px-3.5 py-2 rounded-xl bg-white border border-black/[0.08] hover:bg-[#f2f2f7] text-xs font-semibold text-[#1d1d1f] flex items-center gap-1.5 transition-colors"
           >
             <span className="material-symbols-outlined text-[16px]">refresh</span>
             <span>Refresh</span>
@@ -154,7 +313,7 @@ export const UsageAnalyticsScreen: React.FC = () => {
           <button
             type="button"
             onClick={handleExportCsv}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 min-h-[40px] rounded-xl bg-[#00567c] hover:bg-[#004361] text-xs font-semibold text-white transition-colors"
+            className="min-h-[40px] px-3.5 py-2 rounded-xl bg-[#00567c] hover:bg-[#004361] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
           >
             <span className="material-symbols-outlined text-[16px]">download</span>
             <span>Export CSV</span>
@@ -163,80 +322,89 @@ export const UsageAnalyticsScreen: React.FC = () => {
             <button
               type="button"
               onClick={() => setConfirmReset(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 min-h-[40px] rounded-xl bg-white border border-black/[0.08] hover:bg-[#fef2f2] hover:text-[#b91c1c] text-xs font-semibold text-[#6e6e73] transition-colors"
+              className="min-h-[40px] px-3.5 py-2 rounded-xl bg-white border border-black/[0.08] hover:border-[#b91c1c]/40 hover:text-[#b91c1c] text-xs font-semibold text-[#6e6e73] transition-colors"
             >
-              <span>Reset</span>
+              Reset
             </button>
           ) : (
-            <div className="inline-flex items-center gap-1.5 bg-[#fef2f2] border border-[#b91c1c]/25 px-3 py-1.5 rounded-xl">
+            <div className="flex items-center gap-1.5 bg-[#fef2f2] border border-[#b91c1c]/20 rounded-xl px-2.5 py-1.5">
               <span className="text-xs font-semibold text-[#b91c1c]">Clear logs?</span>
               <button
                 type="button"
                 onClick={handleReset}
                 className="px-2.5 py-1 rounded-lg bg-[#b91c1c] text-white text-xs font-semibold"
               >
-                Yes
+                Confirm
               </button>
               <button
                 type="button"
                 onClick={() => setConfirmReset(false)}
-                className="px-2 py-1 rounded-lg text-xs font-semibold text-[#48484a]"
+                className="px-2 py-1 text-xs font-semibold text-[#6e6e73]"
               >
-                No
+                Cancel
               </button>
             </div>
           )}
+          <button
+            type="button"
+            onClick={handleAdminLogout}
+            className="min-h-[40px] px-3.5 py-2 rounded-xl bg-white border border-black/[0.08] hover:bg-[#f2f2f7] text-xs font-semibold text-[#1d1d1f] flex items-center gap-1.5 transition-colors"
+          >
+            <span className="material-symbols-outlined text-[16px]">logout</span>
+            <span>Sign Out</span>
+          </button>
         </div>
       </header>
 
       {/* Top 4 KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-black/[0.06] shadow-2xs space-y-1">
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-black/[0.06] shadow-2xs">
           <div className="text-xs font-medium text-[#6e6e73]">Unique Visitors</div>
-          <div className="font-display font-mono-num text-2xl sm:text-3xl font-extrabold text-[#1d1d1f]">
+          <div className="font-display font-mono-num text-2xl sm:text-3xl font-extrabold text-[#1d1d1f] mt-1">
             {summary.uniqueVisitors.toLocaleString('en-NG')}
           </div>
-          <div className="text-xs text-[#6e6e73]">
-            {summary.totalSessions} total sessions
+          <div className="text-xs text-[#6e6e73] mt-1 font-mono-num">
+            {summary.totalSessions.toLocaleString('en-NG')} total sessions
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-black/[0.06] shadow-2xs space-y-1">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-black/[0.06] shadow-2xs">
           <div className="text-xs font-medium text-[#6e6e73]">Landing Page Views</div>
-          <div className="font-display font-mono-num text-2xl sm:text-3xl font-extrabold text-[#00567c]">
+          <div className="font-display font-mono-num text-2xl sm:text-3xl font-extrabold text-[#00567c] mt-1">
             {summary.landingViews.toLocaleString('en-NG')}
           </div>
-          <div className="text-xs text-[#15803d] font-medium">
+          <div className="text-xs text-[#15803d] font-semibold mt-1 font-mono-num">
             {summary.landingConversionPct}% entered the app
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-black/[0.06] shadow-2xs space-y-1">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-black/[0.06] shadow-2xs">
           <div className="text-xs font-medium text-[#6e6e73]">Total Screen Views</div>
-          <div className="font-display font-mono-num text-2xl sm:text-3xl font-extrabold text-[#1d1d1f]">
+          <div className="font-display font-mono-num text-2xl sm:text-3xl font-extrabold text-[#1d1d1f] mt-1">
             {summary.totalPageViews.toLocaleString('en-NG')}
           </div>
-          <div className="text-xs text-[#6e6e73]">
+          <div className="text-xs text-[#6e6e73] mt-1 font-mono-num">
             {summary.avgScreensPerSession} screens / visit · {summary.totalFeatureActions} actions
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-black/[0.06] shadow-2xs space-y-1">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-black/[0.06] shadow-2xs">
           <div className="text-xs font-medium text-[#6e6e73]">Phone Browser Share</div>
-          <div className="font-display font-mono-num text-2xl sm:text-3xl font-extrabold text-[#1d1d1f]">
+          <div className="font-display font-mono-num text-2xl sm:text-3xl font-extrabold text-[#1d1d1f] mt-1">
             {summary.devices.mobilePct}%
           </div>
-          <div className="text-xs text-[#6e6e73]">
+          <div className="text-xs text-[#6e6e73] mt-1 font-mono-num">
             Desktop {summary.devices.desktopPct}% · Tablet {summary.devices.tabletPct}%
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Desktop vs Mobile Device Split + Browsers & Viewports */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        <section className="lg:col-span-5 bg-white rounded-2xl p-5 border border-black/[0.06] shadow-2xs space-y-4">
+      {/* Device Breakdown + Top Screens / Transitions */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        {/* Left: Desktop vs Phone Browsers, Browsers & OS, Screen Widths */}
+        <section className="lg:col-span-5 bg-white rounded-2xl p-5 border border-black/[0.06] shadow-2xs space-y-5">
           <div>
-            <h2 className="font-display font-bold text-base text-[#1d1d1f]">
+            <h2 className="font-display text-base font-bold text-[#1d1d1f]">
               Desktop vs Phone Browsers
             </h2>
             <p className="text-xs text-[#6e6e73] mt-0.5">
@@ -244,13 +412,12 @@ export const UsageAnalyticsScreen: React.FC = () => {
             </p>
           </div>
 
-          {/* Stacked Device Distribution Bar */}
-          <div className="space-y-2">
-            <div className="w-full h-3.5 rounded-full bg-[#f2f2f7] overflow-hidden flex">
+          <div className="space-y-2.5">
+            <div className="w-full h-3 rounded-full bg-[#f2f2f7] overflow-hidden flex">
               <div
                 style={{ width: `${summary.devices.mobilePct}%` }}
                 className="bg-[#00567c] h-full transition-all"
-                title={`Mobile Phone: ${summary.devices.mobilePct}%`}
+                title={`Phone: ${summary.devices.mobilePct}%`}
               />
               <div
                 style={{ width: `${summary.devices.desktopPct}%` }}
@@ -259,71 +426,77 @@ export const UsageAnalyticsScreen: React.FC = () => {
               />
               <div
                 style={{ width: `${summary.devices.tabletPct}%` }}
-                className="bg-[#d97706] h-full transition-all"
+                className="bg-[#b45309] h-full transition-all"
                 title={`Tablet: ${summary.devices.tabletPct}%`}
               />
             </div>
-            <div className="grid grid-cols-3 gap-2 text-xs font-mono-num pt-1">
+
+            <div className="grid grid-cols-3 gap-2 text-xs">
               <div className="p-2.5 rounded-xl bg-[#f5f5f7]">
-                <div className="font-sans text-[11px] text-[#6e6e73]">Phone</div>
-                <div className="font-bold text-[#00567c] text-sm mt-0.5">
+                <div className="text-[#6e6e73]">Phone</div>
+                <div className="font-mono-num font-bold text-[#00567c] text-sm mt-0.5">
                   {summary.devices.mobile} ({summary.devices.mobilePct}%)
                 </div>
               </div>
               <div className="p-2.5 rounded-xl bg-[#f5f5f7]">
-                <div className="font-sans text-[11px] text-[#6e6e73]">Desktop</div>
-                <div className="font-bold text-[#0f766e] text-sm mt-0.5">
+                <div className="text-[#6e6e73]">Desktop</div>
+                <div className="font-mono-num font-bold text-[#0f766e] text-sm mt-0.5">
                   {summary.devices.desktop} ({summary.devices.desktopPct}%)
                 </div>
               </div>
               <div className="p-2.5 rounded-xl bg-[#f5f5f7]">
-                <div className="font-sans text-[11px] text-[#6e6e73]">Tablet</div>
-                <div className="font-bold text-[#b45309] text-sm mt-0.5">
+                <div className="text-[#6e6e73]">Tablet</div>
+                <div className="font-mono-num font-bold text-[#b45309] text-sm mt-0.5">
                   {summary.devices.tablet} ({summary.devices.tabletPct}%)
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Browsers & OS side by side */}
-          <div className="grid grid-cols-2 gap-4 pt-2 border-t border-black/[0.06]">
-            <div className="space-y-1.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-black/[0.06]">
+            <div className="space-y-2">
               <h3 className="text-xs font-semibold text-[#6e6e73]">Top Browsers</h3>
-              {summary.browsers.length === 0 ? (
-                <p className="text-xs text-[#86868b]">No views yet</p>
+              {summary.browsers.length > 0 ? (
+                <div className="space-y-1.5">
+                  {summary.browsers.slice(0, 5).map((b) => (
+                    <div key={b.name} className="flex justify-between text-xs">
+                      <span className="text-[#1d1d1f] truncate pr-2">{b.name}</span>
+                      <span className="font-mono-num font-semibold text-[#00567c]">{b.count}</span>
+                    </div>
+                  ))}
+                </div>
               ) : (
-                summary.browsers.map((b) => (
-                  <div key={b.name} className="flex items-center justify-between text-xs gap-2">
-                    <span className="text-[#1d1d1f] truncate">{b.name}</span>
-                    <span className="font-mono-num font-bold text-[#00567c]">{b.count}</span>
-                  </div>
-                ))
+                <p className="text-xs text-[#86868b]">No browser hits yet.</p>
               )}
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <h3 className="text-xs font-semibold text-[#6e6e73]">Operating Systems</h3>
-              {summary.operatingSystems.length === 0 ? (
-                <p className="text-xs text-[#86868b]">No views yet</p>
+              {summary.operatingSystems.length > 0 ? (
+                <div className="space-y-1.5">
+                  {summary.operatingSystems.slice(0, 5).map((os) => (
+                    <div key={os.name} className="flex justify-between text-xs">
+                      <span className="text-[#1d1d1f] truncate pr-2">{os.name}</span>
+                      <span className="font-mono-num font-semibold text-[#00567c]">{os.count}</span>
+                    </div>
+                  ))}
+                </div>
               ) : (
-                summary.operatingSystems.map((o) => (
-                  <div key={o.name} className="flex items-center justify-between text-xs gap-2">
-                    <span className="text-[#1d1d1f] truncate">{o.name}</span>
-                    <span className="font-mono-num font-bold text-[#1d1d1f]">{o.count}</span>
-                  </div>
-                ))
+                <p className="text-xs text-[#86868b]">No OS hits yet.</p>
               )}
             </div>
           </div>
 
-          {/* Recorded Screen Viewports */}
           {summary.viewports.length > 0 && (
-            <div className="pt-2 border-t border-black/[0.06]">
-              <h3 className="text-xs font-semibold text-[#6e6e73] mb-1.5">Active Screen Sizes</h3>
-              <div className="flex flex-wrap gap-2 text-xs font-mono-num text-[#48484a]">
-                {summary.viewports.slice(0, 6).map((vp) => (
-                  <span key={vp.name} className="bg-[#f5f5f7] px-2.5 py-1 rounded-lg">
-                    {vp.name} ({vp.count})
+            <div className="pt-3 border-t border-black/[0.06] space-y-2">
+              <h3 className="text-xs font-semibold text-[#6e6e73]">Active Screen Sizes</h3>
+              <div className="flex flex-wrap gap-1.5">
+                {summary.viewports.slice(0, 6).map((v) => (
+                  <span
+                    key={v.name}
+                    className="px-2.5 py-1 rounded-lg bg-[#f5f5f7] text-[11px] font-mono-num text-[#3a3a3c] border border-black/[0.05]"
+                  >
+                    {v.name} ({v.count})
                   </span>
                 ))}
               </div>
@@ -331,184 +504,196 @@ export const UsageAnalyticsScreen: React.FC = () => {
           )}
         </section>
 
-        {/* Navigation Journeys & Top Screens */}
+        {/* Right: Where Visitors Navigate & Feature Usage */}
         <section className="lg:col-span-7 bg-white rounded-2xl p-5 border border-black/[0.06] shadow-2xs space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Most Visited Screens */}
             <div className="space-y-3">
               <div>
-                <h2 className="font-display font-bold text-base text-[#1d1d1f]">
+                <h2 className="font-display text-base font-bold text-[#1d1d1f]">
                   Where Visitors Go
                 </h2>
                 <p className="text-xs text-[#6e6e73]">Page views by screen</p>
               </div>
-              <div className="space-y-2.5">
-                {summary.topScreens.length === 0 ? (
-                  <p className="text-xs text-[#86868b]">Navigate around the app to see counts.</p>
-                ) : (
-                  summary.topScreens.slice(0, 8).map((s) => (
-                    <div key={s.name} className="space-y-1">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-medium text-[#1d1d1f] truncate">
-                          {formatScreenName(s.name)}
-                        </span>
-                        <span className="font-mono-num font-bold text-[#00567c]">{s.count}</span>
+              {summary.topScreens.length > 0 ? (
+                <div className="space-y-2.5">
+                  {summary.topScreens.slice(0, 7).map((item) => {
+                    const pct = Math.max(6, Math.round((item.count / topScreenMax) * 100));
+                    return (
+                      <div key={item.name} className="space-y-1">
+                        <div className="flex justify-between text-xs">
+                          <span className="font-medium text-[#1d1d1f] truncate pr-2">
+                            {formatScreenName(item.name)}
+                          </span>
+                          <span className="font-mono-num font-semibold text-[#00567c]">
+                            {item.count}
+                          </span>
+                        </div>
+                        <div className="w-full h-1.5 bg-[#f2f2f7] rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-[#00567c] rounded-full"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
                       </div>
-                      <div className="w-full h-1.5 bg-[#f2f2f7] rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-[#00567c] rounded-full"
-                          style={{ width: `${Math.max(8, (s.count / maxScreenCount) * 100)}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-xs text-[#86868b]">No screen visits yet.</p>
+              )}
             </div>
 
-            {/* Top Navigation Flows */}
             <div className="space-y-3">
               <div>
-                <h2 className="font-display font-bold text-base text-[#1d1d1f]">
+                <h2 className="font-display text-base font-bold text-[#1d1d1f]">
                   Top Navigation Paths
                 </h2>
                 <p className="text-xs text-[#6e6e73]">How users move from screen to screen</p>
               </div>
-              <div className="space-y-2.5">
-                {summary.topTransitions.length === 0 ? (
-                  <p className="text-xs text-[#86868b]">
-                    Transitions will appear as users move between pages.
-                  </p>
-                ) : (
-                  summary.topTransitions.slice(0, 8).map((t) => (
-                    <div key={t.name} className="space-y-1">
-                      <div className="flex items-center justify-between text-xs gap-2">
-                        <span className="font-medium text-[#1d1d1f] truncate">
-                          {formatTransition(t.name)}
-                        </span>
-                        <span className="font-mono-num font-bold text-[#0f766e] shrink-0">
-                          {t.count}
-                        </span>
+              {summary.topTransitions.length > 0 ? (
+                <div className="space-y-2.5">
+                  {summary.topTransitions.slice(0, 7).map((item) => {
+                    const pct = Math.max(6, Math.round((item.count / topTransitionMax) * 100));
+                    return (
+                      <div key={item.name} className="space-y-1">
+                        <div className="flex justify-between text-xs">
+                          <span className="font-medium text-[#1d1d1f] truncate pr-2">
+                            {formatTransition(item.name)}
+                          </span>
+                          <span className="font-mono-num font-semibold text-[#0f766e]">
+                            {item.count}
+                          </span>
+                        </div>
+                        <div className="w-full h-1.5 bg-[#f2f2f7] rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-[#0f766e] rounded-full"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
                       </div>
-                      <div className="w-full h-1.5 bg-[#f2f2f7] rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-[#0f766e] rounded-full"
-                          style={{
-                            width: `${Math.max(8, (t.count / maxTransitionCount) * 100)}%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-xs text-[#86868b]">
+                  Navigation paths appear as visitors move between screens.
+                </p>
+              )}
             </div>
           </div>
 
-          {/* Feature Actions & Nigerian States Checked */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-black/[0.06]">
-            <div className="space-y-2">
+          <div className="pt-4 border-t border-black/[0.06] grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2.5">
               <h3 className="text-xs font-semibold text-[#6e6e73]">Top Feature Interactions</h3>
-              {summary.topActions.length === 0 ? (
+              {summary.topActions.length > 0 ? (
+                <div className="space-y-2">
+                  {summary.topActions.slice(0, 6).map((act) => {
+                    const pct = Math.max(6, Math.round((act.count / topActionMax) * 100));
+                    return (
+                      <div key={act.name} className="space-y-1">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-[#1d1d1f] truncate pr-2">{act.name}</span>
+                          <span className="font-mono-num font-semibold text-[#1d1d1f]">
+                            {act.count}
+                          </span>
+                        </div>
+                        <div className="w-full h-1.5 bg-[#f2f2f7] rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-[#3a3a3c] rounded-full"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
                 <p className="text-xs text-[#86868b]">
-                  Interactions like switching states, inspecting staples, or logging trips appear
+                  Interactions like switching states, inspecting staples, or saving budgets appear
                   here.
                 </p>
-              ) : (
-                <div className="space-y-1.5">
-                  {summary.topActions.slice(0, 6).map((a) => (
-                    <div key={a.name} className="flex items-center justify-between text-xs gap-2">
-                      <span className="text-[#1d1d1f] truncate">{a.name}</span>
-                      <span className="font-mono-num font-bold text-[#1d1d1f] shrink-0">
-                        {a.count}
-                      </span>
-                    </div>
-                  ))}
-                </div>
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <h3 className="text-xs font-semibold text-[#6e6e73]">States Being Checked</h3>
-              {summary.topRegions.length === 0 ? (
-                <p className="text-xs text-[#86868b]">State traffic appears as visitors browse.</p>
-              ) : (
+              {summary.topRegions.length > 0 ? (
                 <div className="space-y-1.5">
-                  {summary.topRegions.slice(0, 6).map((r) => (
-                    <div key={r.name} className="flex items-center justify-between text-xs gap-2">
-                      <span className="text-[#1d1d1f] truncate">{r.name}</span>
-                      <span className="font-mono-num font-bold text-[#00567c] shrink-0">
-                        {r.count}
+                  {summary.topRegions.slice(0, 6).map((reg) => (
+                    <div key={reg.name} className="flex justify-between text-xs py-0.5">
+                      <span className="text-[#1d1d1f] truncate pr-2">{reg.name}</span>
+                      <span className="font-mono-num font-semibold text-[#00567c]">
+                        {reg.count}
                       </span>
                     </div>
                   ))}
                 </div>
+              ) : (
+                <p className="text-xs text-[#86868b]">No regional selections recorded yet.</p>
               )}
             </div>
           </div>
         </section>
       </div>
 
-      {/* Live Recent Activity Feed */}
+      {/* Live Recent Activity Stream */}
       <section className="bg-white rounded-2xl border border-black/[0.06] shadow-2xs overflow-hidden">
-        <div className="px-4 sm:px-5 py-4 border-b border-black/[0.06] flex items-center justify-between gap-2">
+        <div className="px-5 py-4 border-b border-black/[0.06] flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h2 className="font-display font-bold text-base text-[#1d1d1f]">
+            <h2 className="font-display text-base font-bold text-[#1d1d1f]">
               Recent Visitor Activity
             </h2>
             <p className="text-xs text-[#6e6e73]">
-              Latest 30 anonymized visits and interactions (no names, emails, or IP addresses stored)
+              Latest 30 anonymized visits and interactions (no names, emails, or visitor IDs exposed)
             </p>
           </div>
           <span className="text-xs font-mono-num text-[#6e6e73]">
-            {summary.totalEvents} total events
+            {summary.totalEvents.toLocaleString('en-NG')} total events
           </span>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-[#f5f5f7] text-[11px] font-semibold text-[#6e6e73] border-b border-black/[0.06]">
-                <th className="py-2.5 px-4 sm:px-5 whitespace-nowrap">When</th>
-                <th className="py-2.5 px-3 whitespace-nowrap">Event / Journey</th>
-                <th className="py-2.5 px-3 whitespace-nowrap">Device &amp; Browser</th>
-                <th className="py-2.5 px-3 whitespace-nowrap hidden sm:table-cell">Viewport</th>
-                <th className="py-2.5 px-4 sm:px-5 whitespace-nowrap hidden md:table-cell">State</th>
+          <table className="w-full text-left text-xs">
+            <thead className="bg-[#f5f5f7] text-[#6e6e73] border-b border-black/[0.06]">
+              <tr>
+                <th className="py-2.5 px-4 font-semibold">When</th>
+                <th className="py-2.5 px-4 font-semibold">Event / Journey</th>
+                <th className="py-2.5 px-4 font-semibold">Device &amp; Browser</th>
+                <th className="py-2.5 px-4 font-semibold hidden sm:table-cell">Viewport</th>
+                <th className="py-2.5 px-4 font-semibold hidden md:table-cell">State</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-black/[0.05] text-xs">
-              {summary.recentEvents.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="py-8 text-center text-[#6e6e73]">
-                    No usage events recorded yet.
-                  </td>
-                </tr>
-              ) : (
+            <tbody className="divide-y divide-black/[0.05]">
+              {summary.recentEvents.length > 0 ? (
                 summary.recentEvents.map((ev) => (
                   <tr key={ev.id} className="hover:bg-[#f5f5f7]/60">
-                    <td className="py-2.5 px-4 sm:px-5 font-mono-num text-[#6e6e73] whitespace-nowrap">
+                    <td className="py-2.5 px-4 font-mono-num text-[#6e6e73] whitespace-nowrap">
                       {formatTimeAgo(ev.ts)}
                     </td>
-                    <td className="py-2.5 px-3 text-[#1d1d1f]">
-                      <div className="font-semibold">
-                        {ev.eventType === 'landing_view'
-                          ? 'Landed on Landing Page'
-                          : ev.eventType === 'page_view'
-                          ? ev.fromScreen
-                            ? `${formatScreenName(ev.fromScreen)} → ${formatScreenName(ev.screen)}`
-                            : `Opened ${formatScreenName(ev.screen)}`
-                          : ev.eventType === 'feature_action'
-                          ? `${ev.action || 'Action'}${ev.detail ? ` · ${ev.detail}` : ''}`
-                          : `Session ended (${ev.durationSec || 0}s)`}
-                      </div>
+                    <td className="py-2.5 px-4 text-[#1d1d1f]">
+                      {ev.eventType === 'feature_action' ? (
+                        <span>
+                          <strong className="font-semibold text-[#00567c]">{ev.action}</strong>
+                          {ev.detail ? ` · ${ev.detail}` : ''}
+                        </span>
+                      ) : ev.eventType === 'landing_view' ? (
+                        <span className="font-semibold text-[#00567c]">Landed on Landing Page</span>
+                      ) : ev.fromScreen && ev.fromScreen !== ev.screen ? (
+                        <span>
+                          {formatScreenName(ev.fromScreen)} →{' '}
+                          <strong className="font-semibold">{formatScreenName(ev.screen)}</strong>
+                        </span>
+                      ) : (
+                        <span className="font-semibold">{formatScreenName(ev.screen)}</span>
+                      )}
                     </td>
-                    <td className="py-2.5 px-3 text-[#48484a] whitespace-nowrap">
-                      <span className="inline-flex items-center gap-1.5">
-                        <span className="material-symbols-outlined text-[15px] text-[#00567c]">
+                    <td className="py-2.5 px-4 whitespace-nowrap text-[#3a3a3c]">
+                      <span className="inline-flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[14px] text-[#00567c]">
                           {ev.deviceType === 'mobile'
                             ? 'smartphone'
                             : ev.deviceType === 'tablet'
-                            ? 'tablet_mac'
+                            ? 'tablet'
                             : 'laptop_mac'}
                         </span>
                         <span>
@@ -516,14 +701,20 @@ export const UsageAnalyticsScreen: React.FC = () => {
                         </span>
                       </span>
                     </td>
-                    <td className="py-2.5 px-3 font-mono-num text-[#6e6e73] whitespace-nowrap hidden sm:table-cell">
+                    <td className="py-2.5 px-4 font-mono-num text-[#6e6e73] hidden sm:table-cell whitespace-nowrap">
                       {ev.viewport}
                     </td>
-                    <td className="py-2.5 px-4 sm:px-5 text-[#6e6e73] whitespace-nowrap hidden md:table-cell">
+                    <td className="py-2.5 px-4 text-[#6e6e73] hidden md:table-cell whitespace-nowrap">
                       {ev.region || '—'}
                     </td>
                   </tr>
                 ))
+              ) : (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-[#86868b]">
+                    No traffic recorded yet.
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>

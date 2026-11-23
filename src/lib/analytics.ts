@@ -1,7 +1,9 @@
 /**
- * MarketPulse Privacy-Respecting Usage & Navigation Analytics Tracker
- * Tracks landing views, screen transitions, feature interactions, and desktop vs phone browser metrics.
- * Sends to Express /api/analytics/event (with sendBeacon support for mobile browsers) and mirrors locally.
+ * MarketPulse Privacy-Respecting Analytics & Google Analytics 4 (GA4) Bridge
+ * - Automatically forwards screen views, landing conversions, and feature interactions to Google Analytics 4
+ *   when VITE_GA_MEASUREMENT_ID (e.g. G-XXXXXXXXXX) is configured.
+ * - Sends write-only anonymized traffic events to /api/analytics/event for the hidden Admin-Only dashboard.
+ * - Reading or resetting analytics requires server-verified Admin authentication (never exposed to users).
  */
 
 export type DeviceClass = 'mobile' | 'tablet' | 'desktop';
@@ -10,8 +12,6 @@ export type AnalyticsEventType = 'landing_view' | 'page_view' | 'feature_action'
 export interface ClientAnalyticsEvent {
   id: string;
   ts: number;
-  visitorId: string;
-  sessionId: string;
   eventType: AnalyticsEventType;
   screen: string;
   fromScreen?: string;
@@ -54,15 +54,77 @@ export interface AnalyticsSummaryResponse {
   topRegions: { name: string; count: number }[];
   dailySeries: { date: string; views: number; visitors: number; mobile: number; desktop: number }[];
   recentEvents: ClientAnalyticsEvent[];
-  source?: 'server' | 'local';
+}
+
+export interface AdminAuthStatus {
+  configured: boolean;
+  authenticated: boolean;
+}
+
+declare global {
+  interface Window {
+    dataLayer?: unknown[];
+    gtag?: (...args: unknown[]) => void;
+  }
 }
 
 const VISITOR_KEY = 'mp_analytics_visitor_id';
 const SESSION_KEY = 'mp_analytics_session_id';
-const LOCAL_LOG_KEY = 'mp_analytics_local_events_v1';
-const MAX_LOCAL_EVENTS = 500;
+const GA4_ID_PATTERN = /^G-[A-Z0-9]{6,16}$/i;
 
 const sessionStartedAt = Date.now();
+let gaInitialized = false;
+
+export function getGaMeasurementId(): string | null {
+  try {
+    const raw = (import.meta.env?.VITE_GA_MEASUREMENT_ID || '').trim();
+    return GA4_ID_PATTERN.test(raw) ? raw : null;
+  } catch {
+    return null;
+  }
+}
+
+export function initGoogleAnalytics(): boolean {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return false;
+  if (gaInitialized) return true;
+
+  const measurementId = getGaMeasurementId();
+  if (!measurementId) return false;
+
+  window.dataLayer = window.dataLayer || [];
+  if (typeof window.gtag !== 'function') {
+    window.gtag = function gtag(...args: unknown[]) {
+      window.dataLayer?.push(args);
+    };
+  }
+
+  window.gtag('js', new Date());
+  window.gtag('config', measurementId, {
+    send_page_view: false,
+    anonymize_ip: true,
+    cookie_flags: 'SameSite=Lax;Secure',
+  });
+
+  if (!document.querySelector(`script[data-mp-ga4="${measurementId}"]`)) {
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
+    script.setAttribute('data-mp-ga4', measurementId);
+    document.head.appendChild(script);
+  }
+
+  gaInitialized = true;
+  return true;
+}
+
+function forwardToGa4(eventName: string, params: Record<string, string | number | undefined>): void {
+  if (!initGoogleAnalytics() || typeof window.gtag !== 'function') return;
+  try {
+    window.gtag('event', eventName, params);
+  } catch {
+    // Non-fatal
+  }
+}
 
 function randomId(prefix: string): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -107,7 +169,13 @@ export function detectClientEnvironment(): {
   referrer: string;
 } {
   if (typeof window === 'undefined' || typeof navigator === 'undefined') {
-    return { deviceType: 'desktop', browser: 'Other', os: 'Other', viewport: 'unknown', referrer: 'Direct' };
+    return {
+      deviceType: 'desktop',
+      browser: 'Other',
+      os: 'Other',
+      viewport: 'unknown',
+      referrer: 'Direct',
+    };
   }
 
   const ua = navigator.userAgent || '';
@@ -162,27 +230,27 @@ export function detectClientEnvironment(): {
   };
 }
 
-function appendLocalEvent(ev: ClientAnalyticsEvent): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const raw = localStorage.getItem(LOCAL_LOG_KEY);
-    const list: ClientAnalyticsEvent[] = raw ? JSON.parse(raw) : [];
-    list.push(ev);
-    localStorage.setItem(LOCAL_LOG_KEY, JSON.stringify(list.slice(-MAX_LOCAL_EVENTS)));
-  } catch {
-    // Ignore quota errors
-  }
+interface OutboundAnalyticsPayload {
+  visitorId: string;
+  sessionId: string;
+  eventType: AnalyticsEventType;
+  screen: string;
+  fromScreen?: string;
+  action?: string;
+  detail?: string;
+  region?: string;
+  deviceType: DeviceClass;
+  browser: string;
+  os: string;
+  viewport: string;
+  referrer: string;
+  durationSec?: number;
 }
 
-function sendPayload(payload: Omit<ClientAnalyticsEvent, 'id' | 'ts'>, useBeacon = false): void {
+function sendPayload(payload: OutboundAnalyticsPayload, useBeacon = false): void {
   if (typeof window === 'undefined') return;
-
-  const fullEvent: ClientAnalyticsEvent = {
-    ...payload,
-    id: randomId('ev'),
-    ts: Date.now(),
-  };
-  appendLocalEvent(fullEvent);
+  // Never track views of the hidden admin console itself
+  if (payload.screen === 'usage-analytics') return;
 
   const bodyStr = JSON.stringify(payload);
   try {
@@ -197,10 +265,10 @@ function sendPayload(payload: Omit<ClientAnalyticsEvent, 'id' | 'ts'>, useBeacon
       body: bodyStr,
       keepalive: true,
     }).catch(() => {
-      // Offline-tolerant; already mirrored locally
+      // Offline-tolerant; never interrupt user flow
     });
   } catch {
-    // Never interrupt user flow on telemetry failure
+    // Non-fatal
   }
 }
 
@@ -209,8 +277,18 @@ export function trackScreenView(params: {
   fromScreen?: string | null;
   region?: string;
 }): void {
+  if (params.screen === 'usage-analytics') return;
   const env = detectClientEnvironment();
   const isLanding = params.screen === 'landing';
+
+  forwardToGa4('page_view', {
+    page_title: `MarketPulse · ${params.screen}`,
+    page_path: `/#/${params.screen}`,
+    device_class: env.deviceType,
+    nigerian_state: params.region,
+    previous_screen: params.fromScreen || undefined,
+  });
+
   sendPayload({
     visitorId: getVisitorId(),
     sessionId: getSessionId(),
@@ -229,6 +307,15 @@ export function trackFeatureAction(params: {
   region?: string;
 }): void {
   const env = detectClientEnvironment();
+
+  forwardToGa4(params.action, {
+    event_category: 'marketpulse_interaction',
+    event_label: params.detail,
+    screen_name: params.screen,
+    nigerian_state: params.region,
+    device_class: env.deviceType,
+  });
+
   sendPayload({
     visitorId: getVisitorId(),
     sessionId: getSessionId(),
@@ -244,6 +331,14 @@ export function trackFeatureAction(params: {
 export function trackSessionEnd(currentScreen: string, region?: string): void {
   const env = detectClientEnvironment();
   const durationSec = Math.max(1, Math.round((Date.now() - sessionStartedAt) / 1000));
+
+  forwardToGa4('session_duration', {
+    screen_name: currentScreen,
+    duration_seconds: durationSec,
+    device_class: env.deviceType,
+    nigerian_state: region,
+  });
+
   sendPayload(
     {
       visitorId: getVisitorId(),
@@ -258,159 +353,85 @@ export function trackSessionEnd(currentScreen: string, region?: string): void {
   );
 }
 
-function buildLocalFallbackSummary(): AnalyticsSummaryResponse {
-  let events: ClientAnalyticsEvent[] = [];
+// --- Admin-only API helpers (server-enforced authentication) ---
+
+export async function fetchAdminAuthStatus(): Promise<AdminAuthStatus> {
   try {
-    const raw = localStorage.getItem(LOCAL_LOG_KEY);
-    events = raw ? JSON.parse(raw) : [];
-  } catch {
-    events = [];
-  }
-
-  const visitors = new Set<string>();
-  const sessions = new Set<string>();
-  const landingSessions = new Set<string>();
-  const converted = new Set<string>();
-  const devSets = { mobile: new Set<string>(), tablet: new Set<string>(), desktop: new Set<string>() };
-  const browsers = new Map<string, number>();
-  const osMap = new Map<string, number>();
-  const viewports = new Map<string, number>();
-  const screens = new Map<string, number>();
-  const transitions = new Map<string, number>();
-  const actions = new Map<string, number>();
-  const regions = new Map<string, number>();
-  const daily = new Map<string, { views: number; visitors: Set<string>; mobile: number; desktop: number }>();
-
-  let landingViews = 0;
-  let pageViews = 0;
-  let featureActions = 0;
-
-  for (const ev of events) {
-    visitors.add(ev.visitorId);
-    sessions.add(ev.sessionId);
-    devSets[ev.deviceType].add(ev.sessionId);
-
-    const dayKey = new Date(ev.ts).toISOString().slice(0, 10);
-    if (!daily.has(dayKey)) {
-      daily.set(dayKey, { views: 0, visitors: new Set(), mobile: 0, desktop: 0 });
-    }
-    const d = daily.get(dayKey)!;
-    d.visitors.add(ev.visitorId);
-
-    if (ev.eventType === 'landing_view') {
-      landingViews++;
-      landingSessions.add(ev.sessionId);
-      screens.set('landing', (screens.get('landing') || 0) + 1);
-      d.views++;
-      if (ev.deviceType === 'mobile') d.mobile++;
-      else d.desktop++;
-    } else if (ev.eventType === 'page_view') {
-      pageViews++;
-      screens.set(ev.screen, (screens.get(ev.screen) || 0) + 1);
-      d.views++;
-      if (ev.deviceType === 'mobile') d.mobile++;
-      else d.desktop++;
-      if (ev.screen !== 'landing' && landingSessions.has(ev.sessionId)) converted.add(ev.sessionId);
-      if (ev.fromScreen && ev.fromScreen !== ev.screen) {
-        const k = `${ev.fromScreen} -> ${ev.screen}`;
-        transitions.set(k, (transitions.get(k) || 0) + 1);
-      }
-    } else if (ev.eventType === 'feature_action' && ev.action) {
-      featureActions++;
-      const lbl = ev.detail ? `${ev.action}: ${ev.detail}` : ev.action;
-      actions.set(lbl, (actions.get(lbl) || 0) + 1);
-    }
-
-    if (ev.eventType === 'landing_view' || ev.eventType === 'page_view') {
-      browsers.set(ev.browser, (browsers.get(ev.browser) || 0) + 1);
-      osMap.set(ev.os, (osMap.get(ev.os) || 0) + 1);
-      if (ev.viewport) viewports.set(ev.viewport, (viewports.get(ev.viewport) || 0) + 1);
-    }
-    if (ev.region) regions.set(ev.region, (regions.get(ev.region) || 0) + 1);
-  }
-
-  const top = (m: Map<string, number>, n = 10) =>
-    Array.from(m.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, n)
-      .map(([name, count]) => ({ name, count }));
-
-  const devTotal = Math.max(1, devSets.mobile.size + devSets.tablet.size + devSets.desktop.size);
-
-  return {
-    generatedAt: Date.now(),
-    totalEvents: events.length,
-    uniqueVisitors: visitors.size,
-    totalSessions: sessions.size,
-    landingViews,
-    landingConversionPct: landingSessions.size
-      ? Number(((converted.size / landingSessions.size) * 100).toFixed(1))
-      : 0,
-    totalPageViews: landingViews + pageViews,
-    totalFeatureActions: featureActions,
-    avgScreensPerSession: sessions.size
-      ? Number(((landingViews + pageViews) / sessions.size).toFixed(1))
-      : 0,
-    avgSessionSec: Math.round((Date.now() - sessionStartedAt) / 1000),
-    devices: {
-      mobile: devSets.mobile.size,
-      tablet: devSets.tablet.size,
-      desktop: devSets.desktop.size,
-      mobilePct: Number(((devSets.mobile.size / devTotal) * 100).toFixed(1)),
-      tabletPct: Number(((devSets.tablet.size / devTotal) * 100).toFixed(1)),
-      desktopPct: Number(((devSets.desktop.size / devTotal) * 100).toFixed(1)),
-    },
-    browsers: top(browsers, 8),
-    operatingSystems: top(osMap, 8),
-    viewports: top(viewports, 8),
-    topScreens: top(screens, 12),
-    topTransitions: top(transitions, 12),
-    topActions: top(actions, 12),
-    topRegions: top(regions, 10),
-    dailySeries: Array.from(daily.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .slice(-14)
-      .map(([date, b]) => ({
-        date,
-        views: b.views,
-        visitors: b.visitors.size,
-        mobile: b.mobile,
-        desktop: b.desktop,
-      })),
-    recentEvents: events.slice(-30).reverse(),
-    source: 'local',
-  };
-}
-
-export async function fetchAnalyticsSummary(): Promise<AnalyticsSummaryResponse> {
-  try {
-    const res = await fetch('/api/analytics/summary', { cache: 'no-store' });
+    const res = await fetch('/api/admin/status', {
+      cache: 'no-store',
+      credentials: 'same-origin',
+    });
     if (res.ok) {
-      const data = (await res.json()) as AnalyticsSummaryResponse;
-      return { ...data, source: 'server' };
+      return (await res.json()) as AdminAuthStatus;
     }
-  } catch {
-    // Fallback to local mirror
-  }
-  return buildLocalFallbackSummary();
-}
-
-export async function resetAnalyticsData(): Promise<void> {
-  try {
-    localStorage.removeItem(LOCAL_LOG_KEY);
   } catch {
     // ignore
   }
+  return { configured: false, authenticated: false };
+}
+
+export async function loginAdminSession(
+  accessCode: string
+): Promise<{ ok: boolean; error?: string }> {
   try {
-    await fetch('/api/analytics/reset', {
+    const res = await fetch('/api/admin/login', {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ accessCode }),
+    });
+    if (res.ok) return { ok: true };
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    return { ok: false, error: data.error || 'Unable to verify admin access code.' };
+  } catch {
+    return { ok: false, error: 'Could not reach the server to verify admin credentials.' };
+  }
+}
+
+export async function logoutAdminSession(): Promise<void> {
+  try {
+    await fetch('/api/admin/logout', {
+      method: 'POST',
+      credentials: 'same-origin',
+    });
+  } catch {
+    // ignore
+  }
+}
+
+export async function fetchAnalyticsSummary(): Promise<{
+  status: 'ok' | 'unauthorized' | 'unconfigured' | 'error';
+  data?: AnalyticsSummaryResponse;
+}> {
+  try {
+    const res = await fetch('/api/analytics/summary', {
+      cache: 'no-store',
+      credentials: 'same-origin',
+    });
+    if (res.ok) {
+      return { status: 'ok', data: (await res.json()) as AnalyticsSummaryResponse };
+    }
+    if (res.status === 401) return { status: 'unauthorized' };
+    if (res.status === 503) return { status: 'unconfigured' };
+    return { status: 'error' };
+  } catch {
+    return { status: 'error' };
+  }
+}
+
+export async function resetAnalyticsData(): Promise<boolean> {
+  try {
+    const res = await fetch('/api/analytics/reset', {
+      method: 'POST',
+      credentials: 'same-origin',
       headers: {
         'Content-Type': 'application/json',
         'X-Requested-With': 'MarketPulse',
       },
       body: JSON.stringify({ confirm: true }),
     });
+    return res.ok;
   } catch {
-    // ignore
+    return false;
   }
 }

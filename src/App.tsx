@@ -27,7 +27,12 @@ import { DataManagementScreen } from './components/DataManagementScreen';
 import { AccountSecurityScreen } from './components/AccountSecurityScreen';
 import { UsageAnalyticsScreen } from './components/UsageAnalyticsScreen';
 import { OfflineIndicator } from './components/OfflineIndicator';
-import { trackScreenView, trackSessionEnd, trackFeatureAction } from './lib/analytics';
+import {
+  initGoogleAnalytics,
+  trackScreenView,
+  trackSessionEnd,
+  trackFeatureAction,
+} from './lib/analytics';
 
 const MainScreenRouter: React.FC = () => {
   const { currentScreen, activeRegion } = useMarketPulse();
@@ -38,6 +43,10 @@ const MainScreenRouter: React.FC = () => {
 
   currentScreenRef.current = currentScreen;
   currentRegionNameRef.current = activeRegion.name;
+
+  useEffect(() => {
+    initGoogleAnalytics();
+  }, []);
 
   // Track every landing view and screen-to-screen navigation journey
   useEffect(() => {

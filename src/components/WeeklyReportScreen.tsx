@@ -1,17 +1,65 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useMarketPulse } from '../context/MarketPulseContext';
 import { useToast } from '../context/ToastContext';
 import { FoodIconBadge } from './ui/FoodIconBadge';
 
+function getCurrentWeekLabel(): string {
+  const end = new Date();
+  const start = new Date(end.getTime() - 6 * 24 * 60 * 60 * 1000);
+  const fmt = (d: Date) =>
+    d.toLocaleDateString('en-NG', { month: 'short', day: 'numeric' });
+  return `${fmt(start)} – ${fmt(end)}`;
+}
+
 export const WeeklyReportScreen: React.FC = () => {
-  const { trips, activeRegion, navigateTo, selectCommodityById } = useMarketPulse();
+  const { trips, commodities, activeRegion, navigateTo, selectCommodityById } = useMarketPulse();
   const { showToast } = useToast();
 
   const latestTrip = trips[0];
+  const previousTrip = trips[1];
   const weeklySpend = latestTrip ? latestTrip.total : 24500;
-  const itemsLoggedCount = latestTrip ? latestTrip.items.length : 14;
+  const itemsLoggedCount = latestTrip ? latestTrip.items.length : 0;
+  const weekRangeLabel = useMemo(() => getCurrentWeekLabel(), []);
+  const primaryMarket = activeRegion.markets[0] || 'Local Market';
+  const secondaryMarket = activeRegion.markets[1] || primaryMarket;
+  const multiplier = activeRegion.priceMultiplier || 1;
 
-  const shareText = `MarketPulse Weekly Summary (${activeRegion.name})\nOct 16 - Oct 22\nTotal Spent: ₦${weeklySpend.toLocaleString('en-NG')} (↓ 8% vs last week)\n${itemsLoggedCount} Food Items Recorded\n\nPrices That Moved:\n• Tomatoes (Basket): ₦18,500 (↑ 12% at Mile 12)\n• Rice (Derica): ₦1,100 (↓ 4% at Oyingbo)\n• Palm Oil (5L): ₦4,200 (Same as last week at Mile 12)\n\nTrack Nigerian market prices on MarketPulse.`;
+  const spendDeltaPct = useMemo(() => {
+    if (!latestTrip || !previousTrip || previousTrip.total <= 0) return -6;
+    return Math.round(((latestTrip.total - previousTrip.total) / previousTrip.total) * 100);
+  }, [latestTrip, previousTrip]);
+
+  const movers = useMemo(() => {
+    const featuredIds = ['palm-oil-5l', 'tomatoes-fresh', 'rice-50kg'];
+    return featuredIds
+      .map((id, idx) => {
+        const c = commodities.find((item) => item.id === id);
+        if (!c) return null;
+        const regionalPrice = Math.round((c.latestPrice * multiplier) / 100) * 100;
+        const mom = typeof c.momChangePct === 'number' ? c.momChangePct : c.priceChangePct;
+        const isUp = mom > 0;
+        return {
+          id: c.id,
+          name: c.name,
+          market: activeRegion.markets[idx % activeRegion.markets.length] || primaryMarket,
+          price: `₦${regionalPrice.toLocaleString('en-NG')}`,
+          delta: `${isUp ? '↑' : '↓'} ${Math.abs(mom).toFixed(1)}%`,
+          tone: (isUp ? 'danger' : 'positive') as 'danger' | 'positive',
+        };
+      })
+      .filter((x): x is NonNullable<typeof x> => Boolean(x));
+  }, [commodities, multiplier, activeRegion.markets, primaryMarket]);
+
+  const shareText = useMemo(() => {
+    const deltaWord =
+      spendDeltaPct <= 0
+        ? `↓ ${Math.abs(spendDeltaPct)}% vs previous trip`
+        : `↑ ${spendDeltaPct}% vs previous trip`;
+    const moverLines = movers
+      .map((m) => `• ${m.name}: ${m.price} (${m.delta} at ${m.market})`)
+      .join('\n');
+    return `MarketPulse Weekly Summary (${activeRegion.name})\n${weekRangeLabel}\nTotal Spent: ₦${weeklySpend.toLocaleString('en-NG')} (${deltaWord})\n${itemsLoggedCount} Food Items Recorded\n\nPrices That Moved:\n${moverLines}\n\nTrack Nigerian market prices on MarketPulse.`;
+  }, [activeRegion.name, weekRangeLabel, weeklySpend, spendDeltaPct, itemsLoggedCount, movers]);
 
   const handleShareWhatsApp = async () => {
     try {
@@ -43,33 +91,6 @@ export const WeeklyReportScreen: React.FC = () => {
     }
   };
 
-  const movers = [
-    {
-      id: 'palm-oil-5l',
-      name: 'Palm Oil (5L Keg)',
-      market: 'Mile 12 Market',
-      price: '₦13,200',
-      delta: '↑ 3.9%',
-      tone: 'danger' as const,
-    },
-    {
-      id: 'tomatoes-fresh',
-      name: 'Tomatoes (Basket)',
-      market: 'Mile 12 Market',
-      price: '₦46,500',
-      delta: '↓ 4.1%',
-      tone: 'positive' as const,
-    },
-    {
-      id: 'rice-50kg',
-      name: 'Rice (Local 50kg)',
-      market: 'Oyingbo Market',
-      price: '₦89,500',
-      delta: '↓ 2.2%',
-      tone: 'positive' as const,
-    },
-  ];
-
   return (
     <div className="min-h-screen bg-[#f5f5f7] pt-20 lg:pt-24 pb-28 lg:pb-14">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
@@ -79,7 +100,7 @@ export const WeeklyReportScreen: React.FC = () => {
             Weekly Summary
           </h1>
           <p className="text-sm text-[#6e6e73] mt-1">
-            Your home&apos;s food spending snapshot for Oct 16 – Oct 22 in {activeRegion.name}.
+            Your home&apos;s food spending snapshot for {weekRangeLabel} in {activeRegion.name}.
           </p>
         </header>
 
@@ -95,7 +116,7 @@ export const WeeklyReportScreen: React.FC = () => {
                   </span>
                   <h2 className="font-display text-2xl font-extrabold mt-1">Your Week in Food</h2>
                   <p className="text-xs text-[#d4e8f7]/80 mt-0.5">
-                    Oct 16 – Oct 22 · {activeRegion.name}
+                    {weekRangeLabel} · {activeRegion.name}
                   </p>
                 </div>
                 <span className="material-symbols-outlined text-3xl text-[#d4e8f7]/50">
@@ -105,12 +126,18 @@ export const WeeklyReportScreen: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3.5">
                 <div className="bg-white/10 p-4 rounded-xl border border-white/12">
-                  <div className="text-xs text-[#d4e8f7]/85">Total Spent</div>
+                  <div className="text-xs text-[#d4e8f7]/85">Latest Market Run</div>
                   <div className="font-display font-mono-num text-2xl font-extrabold mt-1">
                     ₦{weeklySpend.toLocaleString('en-NG')}
                   </div>
-                  <div className="text-[11px] text-[#86efac] font-semibold mt-1 font-mono-num">
-                    ↓ 8% less than last week
+                  <div
+                    className={`text-[11px] font-semibold mt-1 font-mono-num ${
+                      spendDeltaPct <= 0 ? 'text-[#86efac]' : 'text-[#fde68a]'
+                    }`}
+                  >
+                    {spendDeltaPct <= 0
+                      ? `↓ ${Math.abs(spendDeltaPct)}% less than previous run`
+                      : `↑ ${spendDeltaPct}% above previous run`}
                   </div>
                 </div>
                 <div className="bg-white/10 p-4 rounded-xl border border-white/12">
@@ -123,8 +150,10 @@ export const WeeklyReportScreen: React.FC = () => {
               </div>
 
               <div className="bg-white/10 rounded-xl px-4 py-3 text-xs flex items-center justify-between gap-2 border border-white/10">
-                <span className="text-[#d4e8f7]">Cheapest market nearby this week</span>
-                <span className="font-bold text-white whitespace-nowrap">Mile 12 Market</span>
+                <span className="text-[#d4e8f7]">Top wholesale hub nearby</span>
+                <span className="font-bold text-white whitespace-nowrap truncate">
+                  {primaryMarket}
+                </span>
               </div>
             </div>
 
@@ -159,7 +188,7 @@ export const WeeklyReportScreen: React.FC = () => {
             <section className="bg-white rounded-2xl border border-black/[0.06] shadow-2xs overflow-hidden">
               <div className="px-5 py-4 border-b border-black/[0.06] flex items-center justify-between gap-2">
                 <h3 className="font-display font-bold text-base text-[#1d1d1f]">
-                  Prices That Moved This Week
+                  Prices That Moved in {activeRegion.state.replace(' State', '')}
                 </h3>
                 <button
                   type="button"
@@ -193,11 +222,7 @@ export const WeeklyReportScreen: React.FC = () => {
                       </div>
                       <div
                         className={`font-mono-num text-xs font-semibold ${
-                          m.tone === 'danger'
-                            ? 'text-[#b91c1c]'
-                            : m.tone === 'positive'
-                            ? 'text-[#15803d]'
-                            : 'text-[#6e6e73]'
+                          m.tone === 'danger' ? 'text-[#b91c1c]' : 'text-[#15803d]'
                         }`}
                       >
                         {m.delta}
@@ -215,16 +240,16 @@ export const WeeklyReportScreen: React.FC = () => {
                 <span>Smart Market Tip</span>
               </div>
               <p className="text-sm text-[#3a3a3c] leading-relaxed">
-                Your market bag was <strong>8% cheaper</strong> than last week mostly because rice
-                dropped at Oyingbo and palm oil stayed steady. Try buying fresh pepper &amp; tomatoes
-                at Mile 12 and dry food in bulk at Daleko next week.
+                Compare fresh produce at <strong>{primaryMarket}</strong> against dry-food bulk
+                staples at <strong>{secondaryMarket}</strong> before your next market run in{' '}
+                {activeRegion.name}.
               </p>
               <button
                 type="button"
                 onClick={() => navigateTo('price-map', { tab: 'basket' })}
                 className="text-xs font-semibold text-[#00567c] hover:underline inline-flex items-center gap-1"
               >
-                <span>Compare full market bag across Lagos</span>
+                <span>Compare full market bag across {activeRegion.state.replace(' State', '')}</span>
                 <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
               </button>
             </div>

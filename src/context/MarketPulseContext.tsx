@@ -23,6 +23,7 @@ import {
 } from '../lib/firestoreSync';
 import { useNavigation } from './NavigationContext';
 import { useToast } from './ToastContext';
+import { buildCsvDocument } from '../lib/csv';
 import {
   ScreenType,
   PriceMapTab,
@@ -638,16 +639,35 @@ export const MarketPulseProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const updateBudget = useCallback(
     (updates: Partial<BudgetConfig>) => {
-      const next: BudgetConfig = { ...budget, ...updates };
+      const nextFrequency = updates.frequency ?? budget.frequency;
+      const defaultDays = nextFrequency === 'Quarterly' ? 90 : 30;
+      const nextTotalDays =
+        updates.totalDays ??
+        (updates.frequency && updates.frequency !== budget.frequency
+          ? defaultDays
+          : budget.totalDays);
+      const nextCurrentDay = Math.max(
+        1,
+        Math.min(nextTotalDays, updates.currentDay ?? budget.currentDay)
+      );
+
+      const next: BudgetConfig = {
+        ...budget,
+        ...updates,
+        frequency: nextFrequency,
+        totalDays: nextTotalDays,
+        currentDay: nextCurrentDay,
+      };
       setBudget(next);
 
       if (firebaseUser) {
         updateBudgetInFirestore(firebaseUser.uid, next);
       }
 
+      const periodLabel = next.frequency === 'Quarterly' ? 'Quarterly' : 'Monthly';
       showToast({
         message: 'Budget target updated',
-        description: `Monthly target set to ₦${next.monthlyTarget.toLocaleString()}`,
+        description: `${periodLabel} target set to ₦${next.monthlyTarget.toLocaleString('en-NG')}`,
         tone: 'success',
       });
     },
@@ -696,12 +716,19 @@ export const MarketPulseProvider: React.FC<{ children: React.ReactNode }> = ({ c
         a.click();
         URL.revokeObjectURL(url);
       } else {
-        let csvContent = 'Date,Market,Item Name,Category,Quantity,Unit,Price (NGN)\n';
-        trips.forEach((t) => {
-          t.items.forEach((item) => {
-            csvContent += `"${t.date}","${t.market}","${item.name}","${item.category}",${item.quantity},"${item.unit}",${item.price}\n`;
-          });
-        });
+        const headers = ['Date', 'Market', 'Item Name', 'Category', 'Quantity', 'Unit', 'Price (NGN)'];
+        const rows = trips.flatMap((t) =>
+          t.items.map((item) => [
+            t.date,
+            t.market,
+            item.name,
+            item.category,
+            item.quantity,
+            item.unit,
+            item.price,
+          ])
+        );
+        const csvContent = buildCsvDocument(headers, rows);
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');

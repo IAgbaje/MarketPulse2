@@ -269,8 +269,8 @@ export const LogChoiceScreen: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] pt-16 pb-64 lg:pb-12">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+    <div className="min-h-screen bg-[#f5f5f7] pt-16 pb-28 lg:pb-12">
+      <div className="max-w-6xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-4 sm:pt-6 space-y-4 sm:space-y-6">
         {/* Clean Apple-style Header */}
         <header className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -324,32 +324,32 @@ export const LogChoiceScreen: React.FC = () => {
               </div>
             </section>
 
-            {/* Desktop Add Item Composer */}
-            <section className="hidden lg:block bg-white rounded-2xl p-5 border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.03)] space-y-4">
+            {/* Add Item Composer (in-flow on both mobile & desktop so mobile viewport stays unobstructed) */}
+            <section className="bg-white rounded-2xl p-4 sm:p-5 border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.03)] space-y-3.5">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-semibold text-[#6e6e73] uppercase tracking-wider">
                   Add What You Bought
                 </span>
-                <span className="text-[11px] text-[#86868b]">Hit Enter to add</span>
+                <span className="hidden sm:inline text-[11px] text-[#86868b]">Hit Enter to add</span>
               </div>
               {renderComposerForm('down')}
             </section>
 
-            {/* Quick-Tap Popular Nigerian Staples */}
-            <section className="bg-white rounded-2xl p-4 sm:p-5 border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.03)] space-y-3">
+            {/* Quick-Tap Popular Nigerian Staples (compact horizontal strip on mobile, wrap on sm+) */}
+            <section className="bg-white rounded-2xl p-4 sm:p-5 border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.03)] space-y-2.5">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-semibold text-[#6e6e73] uppercase tracking-wider">
                   Tap to Add Everyday Staples
                 </span>
                 <span className="text-[11px] text-[#86868b]">1-tap add</span>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex sm:flex-wrap gap-2 overflow-x-auto sm:overflow-visible no-scrollbar pb-1 sm:pb-0 -mx-1 px-1">
                 {POPULAR_MARKET_STAPLES.slice(0, 10).map((staple) => (
                   <button
                     key={staple.id}
                     type="button"
                     onClick={() => handleQuickAddStaple(staple)}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-[#f5f5f7] hover:bg-[#d4e8f7]/60 hover:text-[#003852] border border-black/[0.05] text-xs font-medium text-[#1d1d1f] transition-all active:scale-95"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-full bg-[#f5f5f7] hover:bg-[#d4e8f7]/60 hover:text-[#003852] border border-black/[0.05] text-xs font-medium text-[#1d1d1f] transition-all active:scale-95 whitespace-nowrap shrink-0"
                   >
                     <span className="text-[15px] leading-none" aria-hidden="true">
                       {staple.icon}
@@ -500,18 +500,26 @@ export const LogChoiceScreen: React.FC = () => {
         </div>
       </div>
 
-      {/* Mobile Fixed Bottom Composer Tray */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 glass-surface border-t border-black/[0.08] p-4 pb-safe z-40 shadow-lg">
-        <div className="max-w-lg mx-auto space-y-2.5">
-          <div className="flex justify-between items-center">
-            <span className="text-xs font-semibold text-[#6e6e73]">
-              Total Spent ({stagingItems.length} {stagingItems.length === 1 ? 'item' : 'items'})
+      {/* Slim Mobile Sticky Bag Summary Bar (never blocks Market/Date/Form) */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-black/[0.08] px-4 py-3 pb-safe z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+        <div className="max-w-lg mx-auto flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <span className="text-[11px] font-medium text-[#6e6e73] block leading-tight">
+              Bag Total ({stagingItems.length} {stagingItems.length === 1 ? 'item' : 'items'})
             </span>
-            <span className="font-display font-mono-num text-xl font-extrabold text-[#00567c]">
-              ₦{runningTotal.toLocaleString()}
+            <span className="font-display font-mono-num text-lg font-extrabold text-[#00567c] leading-tight">
+              ₦{runningTotal.toLocaleString('en-NG')}
             </span>
           </div>
-          {renderComposerForm('up')}
+          <button
+            type="button"
+            id="log-proceed-confirm-btn"
+            onClick={() => navigateTo('log-confirm')}
+            className="min-h-[44px] px-5 py-2.5 bg-[#00567c] hover:bg-[#004361] active:scale-[0.98] text-white font-semibold rounded-xl text-xs sm:text-sm flex items-center gap-1.5 shadow-xs whitespace-nowrap shrink-0 transition-all"
+          >
+            <span>Check &amp; Save ({stagingItems.length})</span>
+            <span className="material-symbols-outlined text-[17px]">arrow_forward</span>
+          </button>
         </div>
       </div>
     </div>

@@ -128,8 +128,8 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
         breadcrumbParent = 'Settings';
         break;
       case 'usage-analytics':
-        computedTitle = 'Usage Insights';
-        breadcrumbParent = 'Insights';
+        computedTitle = 'Admin Insights';
+        breadcrumbParent = 'Admin';
         break;
       default:
         computedTitle = 'MarketPulse';
@@ -154,7 +154,7 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
 
   const formatRegionShortName = (id: string, state: string) => {
     if (id === 'abuja' || state.toLowerCase().includes('federal capital')) {
-      return 'Abuja (FCT)';
+      return 'Abuja';
     }
     return state.replace(' State', '');
   };
@@ -170,18 +170,18 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
     'AO';
 
   return (
-    <header className="fixed top-0 left-0 right-0 lg:left-64 z-30 bg-[#f5f5f7]/85 backdrop-blur-xl border-b border-black/[0.06] flex justify-between items-center gap-3 px-3 sm:px-5 lg:px-8 h-14 lg:h-16 transition-colors">
+    <header className="fixed top-0 left-0 right-0 lg:left-64 z-30 bg-[#f5f5f7]/90 backdrop-blur-xl border-b border-black/[0.06] flex justify-between items-center gap-1.5 sm:gap-3 px-2.5 sm:px-5 lg:px-8 h-14 lg:h-16 transition-colors">
       {/* Left Zone: Mobile Nav Control + Contextual Breadcrumb/Title */}
-      <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0 flex-1">
+      <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-1">
         {effectiveShowClose ? (
           <button
             id="top-close-btn"
             type="button"
             aria-label="Close"
             onClick={handleClose}
-            className="min-w-[44px] min-h-[44px] -ml-2 rounded-full text-[#6e6e73] hover:bg-black/[0.05] transition-colors active:scale-95 flex items-center justify-center shrink-0"
+            className="w-10 h-10 -ml-1 rounded-full text-[#6e6e73] hover:bg-black/[0.05] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00567c]/40 transition-colors active:scale-95 flex items-center justify-center shrink-0"
           >
-            <span className="material-symbols-outlined text-[22px]">close</span>
+            <span className="material-symbols-outlined text-[21px]">close</span>
           </button>
         ) : effectiveShowBack ? (
           <button
@@ -189,9 +189,9 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
             type="button"
             aria-label="Go back"
             onClick={handleBack}
-            className="min-w-[44px] min-h-[44px] -ml-2 rounded-full text-[#00567c] hover:bg-black/[0.05] transition-colors active:scale-95 flex items-center justify-center shrink-0"
+            className="w-10 h-10 -ml-1 rounded-full text-[#00567c] hover:bg-black/[0.05] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00567c]/40 transition-colors active:scale-95 flex items-center justify-center shrink-0"
           >
-            <span className="material-symbols-outlined text-[22px]">arrow_back</span>
+            <span className="material-symbols-outlined text-[21px]">arrow_back</span>
           </button>
         ) : effectiveShowMenu ? (
           <button
@@ -199,13 +199,13 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
             type="button"
             aria-label="Open navigation menu"
             onClick={() => setDrawerOpen(true)}
-            className="lg:hidden min-w-[44px] min-h-[44px] -ml-2 rounded-full text-[#00567c] hover:bg-black/[0.05] transition-colors active:scale-95 flex items-center justify-center shrink-0"
+            className="lg:hidden w-10 h-10 -ml-1 rounded-full text-[#00567c] hover:bg-black/[0.05] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00567c]/40 transition-colors active:scale-95 flex items-center justify-center shrink-0"
           >
-            <span className="material-symbols-outlined text-[22px]">menu</span>
+            <span className="material-symbols-outlined text-[21px]">menu</span>
           </button>
         ) : null}
 
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex items-center gap-1.5 min-w-0">
           {breadcrumbParent && (
             <>
               <span className="hidden sm:inline text-sm font-medium text-[#6e6e73] whitespace-nowrap">
@@ -220,7 +220,7 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
             id="top-brand-title"
             type="button"
             onClick={() => navigateTo('home')}
-            className="text-left font-display font-bold text-[#1d1d1f] lg:text-lg text-base tracking-tight truncate whitespace-nowrap min-w-0 hover:text-[#00567c] transition-colors"
+            className="text-left font-display font-bold text-[#1d1d1f] text-[15px] sm:text-base lg:text-lg tracking-tight truncate whitespace-nowrap min-w-0 hover:text-[#00567c] focus:outline-none transition-colors"
           >
             <span className="lg:hidden">
               {currentScreen === 'home' ? 'MarketPulse' : computedTitle}
@@ -231,19 +231,19 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
       </div>
 
       {/* Right Zone: Search Trigger + Region Switcher + PWA + Profile */}
-      <div className="flex items-center gap-1 sm:gap-2.5 shrink-0">
+      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
         {/* Mobile/Tablet Search Icon Trigger */}
         <button
           id="top-search-btn"
           type="button"
           onClick={() => setCommandPaletteOpen(true)}
           aria-label="Find food or market"
-          className="lg:hidden min-w-[44px] min-h-[44px] rounded-full text-[#6e6e73] hover:bg-black/[0.05] flex items-center justify-center transition-colors shrink-0"
+          className="lg:hidden w-9 h-9 rounded-full text-[#6e6e73] hover:bg-black/[0.05] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00567c]/40 flex items-center justify-center transition-colors shrink-0"
         >
-          <span className="material-symbols-outlined text-[20px]">search</span>
+          <span className="material-symbols-outlined text-[19px]">search</span>
         </button>
 
-        {/* Region Selector */}
+        {/* Region Selector (clean icon spacing so pin never overlaps state text) */}
         {effectiveShowAvatar && (
           <div className="relative shrink-0">
             <select
@@ -251,7 +251,7 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
               value={activeRegion.id}
               onChange={(e) => setActiveRegionId(e.target.value)}
               aria-label="Choose your state"
-              className="appearance-none bg-white hover:bg-[#e8e8ed]/60 border border-black/[0.08] text-[#1d1d1f] text-xs font-semibold pl-6 sm:pl-7 pr-5 sm:pr-6 py-2 min-h-[38px] rounded-full cursor-pointer transition-colors outline-none max-w-[112px] sm:max-w-[160px] truncate shadow-2xs"
+              className="appearance-none bg-white hover:bg-[#e8e8ed]/60 border border-black/[0.08] text-[#1d1d1f] text-xs font-semibold pl-7 pr-6 py-1.5 min-h-[36px] rounded-full cursor-pointer transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[#00567c]/30 max-w-[108px] sm:max-w-[160px] truncate shadow-2xs"
             >
               {regions.map((r) => (
                 <option key={r.id} value={r.id}>
@@ -276,9 +276,9 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
             type="button"
             aria-label="Edit"
             onClick={onEditClick}
-            className="min-w-[40px] min-h-[40px] text-[#00567c] hover:bg-black/[0.05] rounded-full transition-colors active:scale-95 flex items-center justify-center shrink-0"
+            className="w-9 h-9 text-[#00567c] hover:bg-black/[0.05] rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00567c]/40 transition-colors active:scale-95 flex items-center justify-center shrink-0"
           >
-            <span className="material-symbols-outlined text-[21px]">edit</span>
+            <span className="material-symbols-outlined text-[20px]">edit</span>
           </button>
         )}
 
@@ -289,7 +289,7 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
             type="button"
             aria-label="Account and backup"
             onClick={() => navigateTo('account-security')}
-            className="w-9 h-9 rounded-full overflow-hidden border border-black/[0.08] cursor-pointer active:scale-95 hover:ring-2 hover:ring-[#00567c]/30 transition-all bg-[#00567c] text-white text-xs font-bold flex items-center justify-center shrink-0"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden border border-black/[0.08] cursor-pointer active:scale-95 hover:ring-2 hover:ring-[#00567c]/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00567c]/40 transition-all bg-[#00567c] text-white text-[11px] sm:text-xs font-bold flex items-center justify-center shrink-0"
           >
             {firebaseUser?.photoURL ? (
               <img

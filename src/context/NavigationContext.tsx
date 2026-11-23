@@ -188,6 +188,9 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (options?.replace) {
           return [...prev.slice(0, -1), screen];
         }
+        if (prev[prev.length - 1] === screen) {
+          return prev;
+        }
         return [...prev.slice(-19), screen];
       });
 
@@ -219,20 +222,32 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   );
 
   const goBack = useCallback(() => {
-    if (screenHistory.length > 1) {
-      if (typeof window !== 'undefined' && window.history.length > 1) {
-        window.history.back();
-        return;
-      }
-      const nextHistory = [...screenHistory];
-      nextHistory.pop();
-      const target = nextHistory[nextHistory.length - 1];
-      setScreenHistory(nextHistory);
-      setCurrentScreen(target);
-    } else {
-      navigateTo('home', { replace: true });
+    setDrawerOpen(false);
+    setCommandPaletteOpen(false);
+
+    // Find the most recent distinct screen in the in-app stack; fall back to 'home'
+    const trimmed = [...screenHistory];
+    while (trimmed.length > 0 && trimmed[trimmed.length - 1] === currentScreen) {
+      trimmed.pop();
     }
-  }, [screenHistory, navigateTo]);
+    const target: ScreenType = trimmed.length > 0 ? trimmed[trimmed.length - 1] : 'home';
+    const nextStack = trimmed.length > 0 ? trimmed : (['home'] as ScreenType[]);
+
+    setScreenHistory(nextStack);
+    setRouteEntityId(null);
+    setCurrentScreen(target);
+
+    if (typeof window !== 'undefined') {
+      const targetHash = buildHashUrl(
+        target,
+        target === 'price-map' ? { tab: activePriceMapTab } : undefined
+      );
+      if (window.location.hash !== targetHash) {
+        window.history.replaceState({ screen: target }, '', targetHash);
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [screenHistory, currentScreen, activePriceMapTab]);
 
   const previousScreen =
     screenHistory.length > 1 ? screenHistory[screenHistory.length - 2] : null;

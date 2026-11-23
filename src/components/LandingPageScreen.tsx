@@ -6,11 +6,11 @@ import {
   getCommodityAnnualAverages,
 } from '../data/foodInflationData';
 import { trackFeatureAction } from '../lib/analytics';
-import { NIGERIAN_MARKETS_REGISTRY } from '../data/nigerianMarketsRegistry';
+import { ALL_NIGERIAN_MARKETS } from '../data/nigerianMarketsRegistry';
 import heroMarketImg from '../assets/images/hero_nigerian_market_1795349017011.jpg';
 import staplesCounterImg from '../assets/images/nigerian_staples_counter_1795349017492.jpg';
 
-const QUICK_STATES = ['lagos', 'abuja', 'kano', 'rivers', 'oyo', 'enugu'] as const;
+const QUICK_STATES = ['lagos', 'abuja', 'kano', 'portharcourt', 'ibadan', 'enugu'] as const;
 
 export const LandingPageScreen: React.FC = () => {
   const {
@@ -26,7 +26,7 @@ export const LandingPageScreen: React.FC = () => {
   const [staplesImgFailed, setStaplesImgFailed] = useState(false);
 
   const multiplier = activeRegion.priceMultiplier || 1;
-  const totalMappedMarkets = NIGERIAN_MARKETS_REGISTRY.length;
+  const totalMappedMarkets = ALL_NIGERIAN_MARKETS.length;
 
   const markOnboarded = () => {
     try {
@@ -37,7 +37,7 @@ export const LandingPageScreen: React.FC = () => {
   };
 
   const enterApp = (
-    destination: 'home' | 'price-map' | 'log-choice' | 'budget' | 'commodity-detail' | 'usage-analytics',
+    destination: 'home' | 'price-map' | 'log-choice' | 'budget' | 'commodity-detail',
     ctaName: string,
     options?: { tab?: 'map' | 'markets' | 'basket'; entityId?: string }
   ) => {
@@ -122,10 +122,10 @@ export const LandingPageScreen: React.FC = () => {
             </a>
             <button
               type="button"
-              onClick={() => enterApp('usage-analytics', 'nav_analytics')}
+              onClick={() => enterApp('price-map', 'nav_price_map', { tab: 'map' })}
               className="hover:text-[#00567c] transition-colors whitespace-nowrap shrink-0"
             >
-              Usage Insights
+              Price Map
             </button>
           </nav>
 
@@ -615,13 +615,6 @@ export const LandingPageScreen: React.FC = () => {
               className="hover:text-[#00567c] font-medium py-1"
             >
               NBS &amp; CBN Data
-            </button>
-            <button
-              type="button"
-              onClick={() => enterApp('usage-analytics', 'footer_usage_analytics')}
-              className="hover:text-[#00567c] font-medium py-1"
-            >
-              Usage Insights
             </button>
           </div>
           <div>© 2026 MarketPulse · Built for Nigerian Households</div>

@@ -3,15 +3,23 @@ import { motion } from 'motion/react';
 import { useMarketPulse } from '../context/MarketPulseContext';
 import { NairaInput } from './ui/NairaInput';
 import { CategoryIconBadge } from './ui/FoodIconBadge';
+import type { BudgetFrequency } from '../types';
+import {
+  BUDGET_FREQUENCY_OPTIONS,
+  getBudgetFrequencyMeta,
+  normalizeBudgetFrequency,
+} from '../lib/budgetCycle';
+import { trackFeatureAction } from '../lib/analytics';
 
 const QUICK_MONTHLY_TARGETS = [80000, 120000, 180000, 250000];
+const QUICK_QUARTERLY_TARGETS = [240000, 360000, 540000, 750000];
 
 export const SetBudgetScreen: React.FC = () => {
-  const { budget, updateBudget, navigateTo, goBack } = useMarketPulse();
+  const { budget, updateBudget, navigateTo, goBack, activeRegion } = useMarketPulse();
 
   const [targetAmount, setTargetAmount] = useState<number | ''>(budget.monthlyTarget || 120000);
-  const [frequency, setFrequency] = useState<'Weekly' | 'Fortnightly' | 'Monthly'>(
-    budget.frequency || 'Weekly'
+  const [frequency, setFrequency] = useState<BudgetFrequency>(
+    normalizeBudgetFrequency(budget.frequency)
   );
   const [isCategoryExpanded, setIsCategoryExpanded] = useState<boolean>(true);
 
@@ -25,6 +33,10 @@ export const SetBudgetScreen: React.FC = () => {
     budget.categoryBudgets?.pantry?.budget ?? 40000
   );
 
+  const freqMeta = getBudgetFrequencyMeta(frequency);
+  const isQuarterly = frequency === 'Quarterly';
+  const quickTargets = isQuarterly ? QUICK_QUARTERLY_TARGETS : QUICK_MONTHLY_TARGETS;
+
   const parsedTarget = typeof targetAmount === 'number' ? targetAmount : 0;
   const parsedProduce = typeof produceBudget === 'number' ? produceBudget : 0;
   const parsedProtein = typeof proteinBudget === 'number' ? proteinBudget : 0;
@@ -32,21 +44,55 @@ export const SetBudgetScreen: React.FC = () => {
   const categorySum = parsedProduce + parsedProtein + parsedPantry;
   const unallocated = parsedTarget - categorySum;
 
+  const monthlyEquivalent = isQuarterly ? Math.round(parsedTarget / 3) : parsedTarget;
+  const perRunAmount = Math.round(parsedTarget / freqMeta.runsPerPeriod);
+
+  const handleFrequencyChange = (nextFreq: BudgetFrequency) => {
+    const wasQuarterly = frequency === 'Quarterly';
+    const willBeQuarterly = nextFreq === 'Quarterly';
+    setFrequency(nextFreq);
+
+    // Smoothly scale targets when crossing between 1-month and 3-month (quarterly) cycles
+    if (!wasQuarterly && willBeQuarterly) {
+      if (parsedTarget > 0) setTargetAmount(parsedTarget * 3);
+      if (parsedProduce > 0) setProduceBudget(parsedProduce * 3);
+      if (parsedProtein > 0) setProteinBudget(parsedProtein * 3);
+      if (parsedPantry > 0) setPantryBudget(parsedPantry * 3);
+    } else if (wasQuarterly && !willBeQuarterly) {
+      if (parsedTarget > 0) setTargetAmount(Math.max(10000, Math.round(parsedTarget / 3 / 500) * 500));
+      if (parsedProduce > 0) setProduceBudget(Math.max(5000, Math.round(parsedProduce / 3 / 500) * 500));
+      if (parsedProtein > 0) setProteinBudget(Math.max(5000, Math.round(parsedProtein / 3 / 500) * 500));
+      if (parsedPantry > 0) setPantryBudget(Math.max(5000, Math.round(parsedPantry / 3 / 500) * 500));
+    }
+  };
+
   const handleSaveBudget = (e: React.FormEvent) => {
     e.preventDefault();
-    const numTarget = parsedTarget || 85000;
-    const numProduce = parsedProduce || 35000;
-    const numProtein = parsedProtein || 45000;
-    const numPantry = parsedPantry || 40000;
+    const fallbackTarget = isQuarterly ? 360000 : 120000;
+    const numTarget = parsedTarget || fallbackTarget;
+    const numProduce = parsedProduce || (isQuarterly ? 105000 : 35000);
+    const numProtein = parsedProtein || (isQuarterly ? 135000 : 45000);
+    const numPantry = parsedPantry || (isQuarterly ? 120000 : 40000);
+    const nextTotalDays = freqMeta.defaultDays;
+    const nextCurrentDay = Math.max(1, Math.min(nextTotalDays, budget.currentDay || 14));
 
     updateBudget({
       monthlyTarget: numTarget,
       frequency,
+      totalDays: nextTotalDays,
+      currentDay: nextCurrentDay,
       categoryBudgets: {
         produce: { budget: numProduce, spent: budget.categoryBudgets.produce.spent },
         proteins: { budget: numProtein, spent: budget.categoryBudgets.proteins.spent },
         pantry: { budget: numPantry, spent: budget.categoryBudgets.pantry.spent },
       },
+    });
+
+    trackFeatureAction({
+      action: 'budget_saved',
+      detail: `${frequency} (₦${numTarget.toLocaleString('en-NG')})`,
+      screen: 'set-budget',
+      region: activeRegion.name,
     });
 
     navigateTo('budget');
@@ -64,33 +110,41 @@ export const SetBudgetScreen: React.FC = () => {
             Set Your Food Budget
           </h1>
           <p className="text-sm text-[#6e6e73]">
-            Plan how much your home wants to spend on food each month and split it by food group.
+            {isQuarterly
+              ? 'Plan your 3-month (90-day) bulk food spending and split it cleanly by food group.'
+              : 'Plan how much your home wants to spend on food each month and split it by food group.'}
           </p>
         </header>
 
-        {/* Monthly Food Budget Card */}
+        {/* Budget Target Card */}
         <section className="bg-white border border-black/[0.06] rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
           <div className="space-y-2">
             <label
               htmlFor="budget-target-amount-input"
               className="block text-xs font-semibold text-[#6e6e73] tracking-wide"
             >
-              Monthly Food Money Target (₦)
+              {isQuarterly
+                ? 'Quarterly Food Money Target (₦ · 3 Months)'
+                : 'Monthly Food Money Target (₦)'}
             </label>
             <NairaInput
               id="budget-target-amount-input"
               value={targetAmount}
               onChange={setTargetAmount}
               size="lg"
-              placeholder="120,000"
-              ariaLabel="Monthly food budget target in Naira"
+              placeholder={isQuarterly ? '360,000' : '120,000'}
+              ariaLabel={
+                isQuarterly
+                  ? 'Quarterly food budget target in Naira'
+                  : 'Monthly food budget target in Naira'
+              }
             />
           </div>
 
           {/* Quick-fill common Nigerian household food budgets */}
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-[11px] font-medium text-[#6e6e73]">Quick pick:</span>
-            {QUICK_MONTHLY_TARGETS.map((amt) => {
+            {quickTargets.map((amt) => {
               const active = parsedTarget === amt;
               return (
                 <button
@@ -114,8 +168,35 @@ export const SetBudgetScreen: React.FC = () => {
               info
             </span>
             <p className="leading-relaxed">
-              From your recent market runs, keeping around{' '}
-              <strong className="font-mono-num">₦120,000</strong> a month fits how often your home shops.
+              {isQuarterly ? (
+                <>
+                  Your 3-month plan averages{' '}
+                  <strong className="font-mono-num">
+                    ₦{monthlyEquivalent.toLocaleString('en-NG')}/month
+                  </strong>{' '}
+                  across 90 days — ideal for buying bags of rice, beans, garri, and oil in bulk.
+                </>
+              ) : frequency === 'Weekly' ? (
+                <>
+                  At <strong className="font-mono-num">₦{parsedTarget.toLocaleString('en-NG')}</strong> a
+                  month, you have about{' '}
+                  <strong className="font-mono-num">₦{perRunAmount.toLocaleString('en-NG')}</strong> per
+                  weekly market run.
+                </>
+              ) : frequency === 'Fortnightly' ? (
+                <>
+                  At <strong className="font-mono-num">₦{parsedTarget.toLocaleString('en-NG')}</strong> a
+                  month, you have about{' '}
+                  <strong className="font-mono-num">₦{perRunAmount.toLocaleString('en-NG')}</strong> every
+                  2 weeks.
+                </>
+              ) : (
+                <>
+                  From your recent market runs, keeping around{' '}
+                  <strong className="font-mono-num">₦120,000</strong> a month fits how often your
+                  home shops.
+                </>
+              )}
             </p>
           </div>
         </section>
@@ -125,24 +206,28 @@ export const SetBudgetScreen: React.FC = () => {
           <div>
             <h2 className="text-sm font-bold text-[#1d1d1f]">How often do you go to market?</h2>
             <p className="text-xs text-[#6e6e73] mt-0.5">
-              Helps us tell you if you&apos;re spending too fast before month-end.
+              {isQuarterly
+                ? "Helps us pace your 90-day bulk stock so food doesn't finish before quarter-end."
+                : "Helps us tell you if you're spending too fast before month-end."}
             </p>
           </div>
-          <div className="grid grid-cols-3 bg-[#f2f2f7] p-1 rounded-xl border border-black/[0.05]">
-            {(
-              [
-                { value: 'Weekly', label: 'Every Week' },
-                { value: 'Fortnightly', label: 'Every 2 Weeks' },
-                { value: 'Monthly', label: 'Once a Month' },
-              ] as const
-            ).map((freq) => {
+
+          <div
+            role="radiogroup"
+            aria-label="Market shopping frequency"
+            className="grid grid-cols-2 sm:grid-cols-4 gap-1 bg-[#f2f2f7] p-1 rounded-xl border border-black/[0.05]"
+          >
+            {BUDGET_FREQUENCY_OPTIONS.map((freq) => {
               const active = frequency === freq.value;
               return (
                 <button
                   key={freq.value}
+                  id={`budget-freq-${freq.value.toLowerCase()}`}
                   type="button"
-                  onClick={() => setFrequency(freq.value)}
-                  className={`relative min-h-[42px] px-2.5 py-2 rounded-lg font-semibold text-xs sm:text-sm transition-colors whitespace-nowrap ${
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => handleFrequencyChange(freq.value)}
+                  className={`relative min-h-[44px] px-2.5 py-2 rounded-lg font-semibold text-xs sm:text-[13px] transition-colors whitespace-nowrap ${
                     active ? 'text-[#00567c]' : 'text-[#6e6e73] hover:text-[#1d1d1f]'
                   }`}
                 >
@@ -158,6 +243,11 @@ export const SetBudgetScreen: React.FC = () => {
               );
             })}
           </div>
+
+          <p className="text-[11px] text-[#6e6e73] flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-[15px] text-[#00567c]">event_repeat</span>
+            <span>{freqMeta.helperText}</span>
+          </p>
         </section>
 
         {/* Split by Food Group */}
@@ -173,7 +263,7 @@ export const SetBudgetScreen: React.FC = () => {
               </div>
               <div className="min-w-0">
                 <span className="font-display font-bold text-sm text-[#1d1d1f] block">
-                  Split by Food Group
+                  Split by Food Group {isQuarterly ? '(3-Month Total)' : ''}
                 </span>
                 <span className="text-xs text-[#6e6e73] font-mono-num block mt-0.5">
                   Shared out: ₦{categorySum.toLocaleString('en-NG')}
@@ -213,8 +303,8 @@ export const SetBudgetScreen: React.FC = () => {
                     value={produceBudget}
                     onChange={setProduceBudget}
                     size="md"
-                    placeholder="35,000"
-                    ariaLabel="Fresh produce monthly budget in Naira"
+                    placeholder={isQuarterly ? '105,000' : '35,000'}
+                    ariaLabel={`Fresh produce ${freqMeta.periodNoun}ly budget in Naira`}
                   />
                   <p className="text-[11px] text-[#6e6e73]">Tomatoes, pepper, onions, veggies</p>
                 </div>
@@ -232,8 +322,8 @@ export const SetBudgetScreen: React.FC = () => {
                     value={proteinBudget}
                     onChange={setProteinBudget}
                     size="md"
-                    placeholder="45,000"
-                    ariaLabel="Meat, fish and eggs monthly budget in Naira"
+                    placeholder={isQuarterly ? '135,000' : '45,000'}
+                    ariaLabel={`Meat, fish and eggs ${freqMeta.periodNoun}ly budget in Naira`}
                   />
                   <p className="text-[11px] text-[#6e6e73]">Beef, chicken, fish, crate of eggs</p>
                 </div>
@@ -251,8 +341,8 @@ export const SetBudgetScreen: React.FC = () => {
                     value={pantryBudget}
                     onChange={setPantryBudget}
                     size="md"
-                    placeholder="40,000"
-                    ariaLabel="Rice, oil and dry food monthly budget in Naira"
+                    placeholder={isQuarterly ? '120,000' : '40,000'}
+                    ariaLabel={`Rice, oil and dry food ${freqMeta.periodNoun}ly budget in Naira`}
                   />
                   <p className="text-[11px] text-[#6e6e73]">Rice, garri, beans, oil, semo</p>
                 </div>
@@ -275,7 +365,7 @@ export const SetBudgetScreen: React.FC = () => {
             type="submit"
             className="w-full sm:w-auto min-h-[46px] px-7 py-3 bg-[#00567c] text-white font-semibold rounded-xl shadow-xs hover:bg-[#003e5a] active:scale-[0.99] transition-all flex items-center justify-center gap-2 text-sm"
           >
-            <span>Save Food Budget</span>
+            <span>{isQuarterly ? 'Save Quarterly Budget' : 'Save Food Budget'}</span>
             <span className="material-symbols-outlined text-[18px]">check</span>
           </button>
         </div>

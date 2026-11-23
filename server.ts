@@ -1,7 +1,8 @@
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import express from 'express';
-import type { Request, Response } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 
 interface AnalyticsEventRecord {
   id: string;
@@ -43,9 +44,137 @@ const MAX_STORED_EVENTS = 10000;
 const ALLOWED_EVENT_TYPES = new Set(['landing_view', 'page_view', 'feature_action', 'session_end']);
 const ALLOWED_DEVICES = new Set(['mobile', 'tablet', 'desktop']);
 
+// Server-only admin session signing key (ephemeral CSPRNG fallback if not configured)
+const SESSION_SECRET =
+  process.env.ADMIN_SESSION_SECRET && process.env.ADMIN_SESSION_SECRET.length >= 16
+    ? process.env.ADMIN_SESSION_SECRET
+    : crypto.randomBytes(32).toString('hex');
+const ADMIN_COOKIE_NAME = 'mp_admin_session';
+const ADMIN_SESSION_TTL_MS = 1000 * 60 * 60 * 8; // 8 hours
+
+function getConfiguredAdminCode(): string {
+  return (process.env.ADMIN_ACCESS_CODE || '').trim();
+}
+
+function constantTimeEquals(a: string, b: string): boolean {
+  const bufA = Buffer.from(a, 'utf-8');
+  const bufB = Buffer.from(b, 'utf-8');
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
+function createSignedAdminToken(): string {
+  const exp = Date.now() + ADMIN_SESSION_TTL_MS;
+  const nonce = crypto.randomBytes(12).toString('hex');
+  const payload = `${exp}.${nonce}`;
+  const sig = crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('hex');
+  return `${payload}.${sig}`;
+}
+
+function verifySignedAdminToken(token: string | undefined): boolean {
+  if (!token) return false;
+  const parts = token.split('.');
+  if (parts.length !== 3) return false;
+  const [expStr, nonce, sig] = parts;
+  const exp = Number(expStr);
+  if (!Number.isFinite(exp) || exp < Date.now() || !nonce || !sig) return false;
+  const expectedSig = crypto
+    .createHmac('sha256', SESSION_SECRET)
+    .update(`${expStr}.${nonce}`)
+    .digest('hex');
+  return constantTimeEquals(sig, expectedSig);
+}
+
+function parseCookieHeader(cookieHeader: string | undefined): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (!cookieHeader) return out;
+  for (const part of cookieHeader.split(';')) {
+    const idx = part.indexOf('=');
+    if (idx <= 0) continue;
+    const key = part.slice(0, idx).trim();
+    const val = part.slice(idx + 1).trim();
+    if (key) out[key] = decodeURIComponent(val);
+  }
+  return out;
+}
+
+function isAdminRequest(req: Request): boolean {
+  const adminCode = getConfiguredAdminCode();
+  if (!adminCode) return false;
+
+  // Option 1: Signed HttpOnly session cookie
+  const cookies = parseCookieHeader(req.headers.cookie);
+  if (verifySignedAdminToken(cookies[ADMIN_COOKIE_NAME])) {
+    return true;
+  }
+
+  // Option 2: Authorization: Bearer <ADMIN_ACCESS_CODE>
+  const authHeader = req.get('authorization') || '';
+  if (authHeader.startsWith('Bearer ')) {
+    const provided = authHeader.slice(7).trim();
+    if (provided && constantTimeEquals(provided, adminCode)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function requireAdmin(req: Request, res: Response, next: NextFunction): void {
+  if (!getConfiguredAdminCode()) {
+    res.status(503).json({
+      error: 'Admin analytics access is not configured on this server.',
+      code: 'ADMIN_NOT_CONFIGURED',
+    });
+    return;
+  }
+  if (!isAdminRequest(req)) {
+    res.status(401).json({
+      error: 'Admin authentication required.',
+      code: 'ADMIN_UNAUTHORIZED',
+    });
+    return;
+  }
+  next();
+}
+
+// Lightweight per-IP sliding-window rate limiter
+function createRateLimiter(options: { windowMs: number; maxRequests: number }) {
+  const buckets = new Map<string, number[]>();
+
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const ip =
+      (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
+      req.socket.remoteAddress ||
+      'unknown';
+    const now = Date.now();
+    const cutoff = now - options.windowMs;
+    const timestamps = (buckets.get(ip) || []).filter((t) => t > cutoff);
+
+    if (timestamps.length >= options.maxRequests) {
+      res.setHeader('Retry-After', String(Math.ceil(options.windowMs / 1000)));
+      res.status(429).json({ error: 'Too many requests. Please slow down.' });
+      return;
+    }
+
+    timestamps.push(now);
+    buckets.set(ip, timestamps);
+
+    // Opportunistic cleanup to keep memory bounded
+    if (buckets.size > 2000) {
+      for (const [key, list] of buckets.entries()) {
+        if (!list.length || list[list.length - 1] <= cutoff) {
+          buckets.delete(key);
+        }
+      }
+    }
+
+    next();
+  };
+}
+
 function sanitizeStr(input: unknown, maxLen: number = 80, fallback: string = ''): string {
   if (typeof input !== 'string') return fallback;
-  // Strip control characters and angle brackets to prevent injection downstream
   const cleaned = input
     .replace(/[\u0000-\u001F\u007F<>]/g, '')
     .trim()
@@ -154,7 +283,10 @@ function computeAnalyticsSummary(events: AnalyticsEventRecord[]) {
   const transitionCounts = new Map<string, number>();
   const actionCounts = new Map<string, number>();
   const regionCounts = new Map<string, number>();
-  const dailyTraffic = new Map<string, { views: number; visitors: Set<string>; mobile: number; desktop: number }>();
+  const dailyTraffic = new Map<
+    string,
+    { views: number; visitors: Set<string>; mobile: number; desktop: number }
+  >();
 
   let landingViews = 0;
   let totalPageViews = 0;
@@ -248,6 +380,12 @@ function computeAnalyticsSummary(events: AnalyticsEventRecord[]) {
       desktop: b.desktop,
     }));
 
+  // Strip raw visitorId & sessionId before returning recent events
+  const redactedRecentEvents = events
+    .slice(-30)
+    .reverse()
+    .map(({ visitorId: _v, sessionId: _s, ...safeEvent }) => safeEvent);
+
   return {
     generatedAt: Date.now(),
     totalEvents: events.length,
@@ -277,21 +415,78 @@ function computeAnalyticsSummary(events: AnalyticsEventRecord[]) {
     topActions: toTopList(actionCounts, 12),
     topRegions: toTopList(regionCounts, 10),
     dailySeries,
-    recentEvents: events.slice(-30).reverse(),
+    recentEvents: redactedRecentEvents,
   };
 }
+
+const BLOCKED_PATH_PATTERNS = [
+  /^\/\.data(\/|$)/i,
+  /^\/\.env/i,
+  /^\/\.git(\/|$)/i,
+  /^\/server\.ts$/i,
+  /^\/package(-lock)?\.json$/i,
+  /^\/tests(\/|$)/i,
+  /^\/docs(\/|$)/i,
+  /^\/firebase-applet-config\.json$/i,
+];
 
 async function startServer() {
   const app = express();
   app.disable('x-powered-by');
+
+  // Defensive HTTP security headers (iframe-compatible for AI Studio preview)
+  app.use((_req: Request, res: Response, next: NextFunction) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'camera=(self), geolocation=(self), microphone=()');
+    res.setHeader(
+      'Content-Security-Policy',
+      [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://www.googletagmanager.com https://apis.google.com",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        "img-src 'self' data: blob: https://*.googleapis.com https://*.gstatic.com https://*.googleusercontent.com https://www.google-analytics.com",
+        "font-src 'self' data: https://fonts.gstatic.com",
+        "connect-src 'self' https://maps.googleapis.com https://*.googleapis.com https://www.google-analytics.com https://region1.google-analytics.com https://analytics.google.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com",
+        "frame-src 'self' https://*.firebaseapp.com https://accounts.google.com",
+        "object-src 'none'",
+        "base-uri 'self'",
+      ].join('; ')
+    );
+    next();
+  });
+
+  // Block direct HTTP access to server source, dotfiles, and internal .data store
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    let decodedPath = req.path;
+    try {
+      decodedPath = decodeURIComponent(req.path);
+    } catch {
+      res.status(400).json({ error: 'Malformed request path' });
+      return;
+    }
+    if (
+      decodedPath.includes('..') ||
+      BLOCKED_PATH_PATTERNS.some((pattern) => pattern.test(decodedPath))
+    ) {
+      res.status(404).end();
+      return;
+    }
+    next();
+  });
+
   app.use(express.json({ limit: '16kb' }));
   app.use(express.text({ type: 'text/plain', limit: '16kb' }));
+
+  const eventRateLimiter = createRateLimiter({ windowMs: 60_000, maxRequests: 60 });
+  const adminLoginLimiter = createRateLimiter({ windowMs: 15 * 60_000, maxRequests: 10 });
 
   app.get('/api/health', (_req: Request, res: Response) => {
     res.json({ ok: true, ts: Date.now() });
   });
 
-  app.post('/api/analytics/event', (req: Request, res: Response) => {
+  // Public ingestion endpoint (rate-limited, write-only, strictly validated)
+  app.post('/api/analytics/event', eventRateLimiter, (req: Request, res: Response) => {
     let payload: unknown = req.body;
     if (typeof payload === 'string') {
       try {
@@ -317,11 +512,61 @@ async function startServer() {
     res.status(202).json({ ok: true, id: record.id });
   });
 
-  app.get('/api/analytics/summary', (_req: Request, res: Response) => {
+  // Admin session management routes
+  app.get('/api/admin/status', (req: Request, res: Response) => {
+    const configured = Boolean(getConfiguredAdminCode());
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({
+      configured,
+      authenticated: configured ? isAdminRequest(req) : false,
+    });
+  });
+
+  app.post('/api/admin/login', adminLoginLimiter, (req: Request, res: Response) => {
+    const adminCode = getConfiguredAdminCode();
+    if (!adminCode) {
+      res.status(503).json({
+        error: 'Set ADMIN_ACCESS_CODE in server environment secrets to unlock Admin Insights.',
+        code: 'ADMIN_NOT_CONFIGURED',
+      });
+      return;
+    }
+
+    const body = req.body as Record<string, unknown> | undefined;
+    const provided = typeof body?.accessCode === 'string' ? body.accessCode.trim() : '';
+    if (!provided || !constantTimeEquals(provided, adminCode)) {
+      res.status(401).json({ error: 'Invalid admin access code.' });
+      return;
+    }
+
+    const token = createSignedAdminToken();
+    const cookieParts = [
+      `${ADMIN_COOKIE_NAME}=${encodeURIComponent(token)}`,
+      'Path=/',
+      'HttpOnly',
+      'SameSite=Lax',
+      `Max-Age=${Math.floor(ADMIN_SESSION_TTL_MS / 1000)}`,
+    ];
+    if (IS_PROD) cookieParts.push('Secure');
+    res.setHeader('Set-Cookie', cookieParts.join('; '));
+    res.json({ ok: true });
+  });
+
+  app.post('/api/admin/logout', (_req: Request, res: Response) => {
+    res.setHeader(
+      'Set-Cookie',
+      `${ADMIN_COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`
+    );
+    res.json({ ok: true });
+  });
+
+  // Admin-only analytics summary & reset endpoints
+  app.get('/api/analytics/summary', requireAdmin, (_req: Request, res: Response) => {
+    res.setHeader('Cache-Control', 'no-store');
     res.json(computeAnalyticsSummary(store.events));
   });
 
-  app.post('/api/analytics/reset', (req: Request, res: Response) => {
+  app.post('/api/analytics/reset', requireAdmin, (req: Request, res: Response) => {
     const requestedWith = req.get('x-requested-with');
     const body = req.body as Record<string, unknown> | undefined;
     if (requestedWith !== 'MarketPulse' || body?.confirm !== true) {

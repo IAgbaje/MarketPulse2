@@ -101,12 +101,14 @@ export interface Trip {
   items: TripItem[];
 }
 
+export type BudgetFrequency = 'Weekly' | 'Fortnightly' | 'Monthly' | 'Quarterly';
+
 export interface BudgetConfig {
   monthlyTarget: number;
   spentSoFar: number;
   currentDay: number;
   totalDays: number;
-  frequency: 'Weekly' | 'Fortnightly' | 'Monthly';
+  frequency: BudgetFrequency;
   categoryBudgets: {
     produce: { budget: number; spent: number };
     proteins: { budget: number; spent: number };

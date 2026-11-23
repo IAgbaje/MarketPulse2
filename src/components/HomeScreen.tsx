@@ -6,6 +6,7 @@ import {
   computeBasketInflationSummary,
 } from '../data/foodInflationData';
 import { FoodIconBadge } from './ui/FoodIconBadge';
+import { computeBudgetCycleMetrics } from '../lib/budgetCycle';
 
 export const HomeScreen: React.FC = () => {
   const {
@@ -40,14 +41,12 @@ export const HomeScreen: React.FC = () => {
     });
   }, [activeRegion]);
 
-  const spentPacePct = Math.min(100, Math.round((budget.spentSoFar / (budget.monthlyTarget || 1)) * 100));
-  const monthElapsedPct = Math.round((budget.currentDay / (budget.totalDays || 30)) * 100);
-  const isOverPace = spentPacePct > monthElapsedPct;
-  const remainingBudget = Math.max(0, budget.monthlyTarget - budget.spentSoFar);
-  const overAmount = Math.max(
-    0,
-    budget.spentSoFar - budget.monthlyTarget * (budget.currentDay / (budget.totalDays || 30))
-  );
+  const cycle = computeBudgetCycleMetrics(budget);
+  const spentPacePct = cycle.spentPct;
+  const monthElapsedPct = cycle.elapsedPct;
+  const isOverPace = cycle.isOverPace;
+  const remainingBudget = cycle.remaining;
+  const overAmount = cycle.overPaceAmount;
 
   return (
     <div className="w-full max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-[72px] lg:pt-24 pb-24 lg:pb-12">
@@ -86,15 +85,18 @@ export const HomeScreen: React.FC = () => {
         {/* Monthly Food Money Hero (7 cols on desktop) */}
         <section className="lg:col-span-7 bg-white rounded-2xl p-5 sm:p-6 border border-black/[0.06] shadow-2xs flex flex-col justify-between">
           <div>
-            <div className="flex justify-between items-center gap-2 mb-4">
-              <h2 className="font-display text-sm font-semibold text-[#6e6e73]">
-                This Month&apos;s Food Money
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 mb-4">
+              <h2 className="font-display text-sm font-semibold text-[#6e6e73] leading-snug">
+                {cycle.meta.periodHeading}
+                <span className="ml-1.5 text-xs font-medium text-[#86868b]">
+                  · {cycle.meta.label}
+                </span>
               </h2>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3.5 shrink-0">
                 <button
                   type="button"
                   onClick={() => navigateTo('budget')}
-                  className="text-xs font-semibold text-[#6e6e73] hover:text-[#1d1d1f] transition-colors"
+                  className="text-xs font-semibold text-[#6e6e73] hover:text-[#1d1d1f] transition-colors whitespace-nowrap"
                 >
                   See breakdown
                 </button>
@@ -102,7 +104,7 @@ export const HomeScreen: React.FC = () => {
                   id="home-adjust-budget-btn"
                   type="button"
                   onClick={() => navigateTo('set-budget')}
-                  className="text-xs font-semibold text-[#00567c] hover:underline shrink-0"
+                  className="text-xs font-semibold text-[#00567c] hover:underline whitespace-nowrap shrink-0"
                 >
                   Change budget
                 </button>
@@ -112,29 +114,31 @@ export const HomeScreen: React.FC = () => {
             <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <div>
                 <p className="font-display text-3xl sm:text-4xl font-extrabold text-[#1d1d1f] tabular-nums tracking-tight">
-                  ₦{budget.spentSoFar.toLocaleString('en-NG')}
+                  ₦{cycle.spent.toLocaleString('en-NG')}
                 </p>
                 {isOverPace ? (
                   <p className="text-sm font-medium text-[#b45309] mt-1.5 flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-[18px] shrink-0">warning</span>
                     <span>
                       ₦{Math.round(overAmount || 4200).toLocaleString('en-NG')} faster than planned
-                      for Day {budget.currentDay}
+                      for Day {cycle.currentDay}
                     </span>
                   </p>
                 ) : (
                   <p className="text-sm font-medium text-[#15803d] mt-1.5 flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-[18px] shrink-0">check_circle</span>
-                    <span>Your food money is stretching nicely this month</span>
+                    <span>
+                      Your food money is stretching nicely this {cycle.meta.periodNoun}
+                    </span>
                   </p>
                 )}
               </div>
 
               <div className="flex sm:flex-col items-baseline sm:items-end gap-4 sm:gap-1 text-xs text-[#6e6e73]">
                 <div>
-                  Budget{' '}
+                  {cycle.isQuarterly ? '3-Month Budget' : 'Budget'}{' '}
                   <span className="font-mono-num font-semibold text-[#1d1d1f]">
-                    ₦{budget.monthlyTarget.toLocaleString('en-NG')}
+                    ₦{cycle.target.toLocaleString('en-NG')}
                   </span>
                 </div>
                 <div>
@@ -154,7 +158,7 @@ export const HomeScreen: React.FC = () => {
                 aria-hidden="true"
                 className="absolute top-0 bottom-0 w-0.5 bg-[#1d1d1f]/65 z-20"
                 style={{ left: `${monthElapsedPct}%` }}
-                title={`Day ${budget.currentDay} expected pace`}
+                title={`Day ${cycle.currentDay} expected pace`}
               />
               <div
                 className="absolute top-0 bottom-0 left-0 bg-[#00567c] z-10 transition-all duration-500 ease-out"
@@ -173,7 +177,12 @@ export const HomeScreen: React.FC = () => {
 
             <div className="flex justify-between text-xs font-medium text-[#6e6e73]">
               <span>
-                Day {budget.currentDay} of {budget.totalDays}
+                Day {cycle.currentDay} of {cycle.totalDays}
+                {cycle.isQuarterly && (
+                  <span className="ml-1.5 text-[#86868b] font-mono-num">
+                    · ≈ ₦{cycle.monthlyEquivalent.toLocaleString('en-NG')}/mo
+                  </span>
+                )}
               </span>
               <span className="font-mono-num font-semibold text-[#1d1d1f]">
                 {spentPacePct}% spent
@@ -486,19 +495,6 @@ export const HomeScreen: React.FC = () => {
             </div>
           )}
         </section>
-      </div>
-
-      {/* Mobile-only Floating Action Button */}
-      <div className="lg:hidden fixed bottom-20 right-4 z-30">
-        <button
-          id="home-fab-log-shop"
-          type="button"
-          onClick={() => navigateTo('log-choice')}
-          className="bg-[#00567c] text-white hover:bg-[#004361] rounded-2xl px-5 h-13 shadow-lg shadow-[#00567c]/25 flex items-center gap-2 transition-all active:scale-95 font-semibold text-sm"
-        >
-          <span className="material-symbols-outlined text-[20px]">add</span>
-          <span>Record Market Run</span>
-        </button>
       </div>
     </div>
   );

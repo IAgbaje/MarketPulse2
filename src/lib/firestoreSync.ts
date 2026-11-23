@@ -21,8 +21,18 @@ import {
   sanitizeId,
 } from './firebase';
 import { Trip, TripItem, BudgetConfig, UserProfile, ItemCategory, UnitType } from '../types';
+import { normalizeBudgetFrequency } from './budgetCycle';
 
-const VALID_CATEGORIES: ItemCategory[] = ['Produce', 'Proteins', 'Pantry Staples', 'Household', 'Spices'];
+const VALID_CATEGORIES: ItemCategory[] = [
+  'Produce',
+  'Proteins',
+  'Pantry Staples',
+  'Fruits',
+  'Tubers & Roots',
+  'Spices',
+  'Dairy & Drinks',
+  'Household',
+];
 const VALID_ANNOTATIONS = ['history', 'community', 'unsure', 'outlier', 'none'] as const;
 
 export async function saveTripToFirestore(uid: string, trip: Trip): Promise<void> {
@@ -123,7 +133,7 @@ export async function updateBudgetInFirestore(uid: string, next: BudgetConfig): 
       spentSoFar: Math.max(0, Number(next.spentSoFar) || 0),
       currentDay: Math.max(1, Math.min(366, Math.round(next.currentDay || 14))),
       totalDays: Math.max(1, Math.min(366, Math.round(next.totalDays || 31))),
-      frequency: next.frequency === 'Weekly' ? 'Weekly' : 'Monthly',
+      frequency: normalizeBudgetFrequency(next.frequency),
       produceBudget: Math.max(0, Number(next.categoryBudgets.produce.budget) || 0),
       produceSpent: Math.max(0, Number(next.categoryBudgets.produce.spent) || 0),
       proteinsBudget: Math.max(0, Number(next.categoryBudgets.proteins.budget) || 0),
@@ -329,7 +339,7 @@ export function subscribeUserCloudData(params: BootstrapParams): () => void {
           spentSoFar: Math.max(0, Number(budget.spentSoFar) || 0),
           currentDay: Math.max(1, Math.min(366, Math.round(budget.currentDay || 14))),
           totalDays: Math.max(1, Math.min(366, Math.round(budget.totalDays || 31))),
-          frequency: budget.frequency === 'Weekly' ? 'Weekly' : 'Monthly',
+          frequency: normalizeBudgetFrequency(budget.frequency),
           produceBudget: Math.max(0, Number(budget.categoryBudgets.produce.budget) || 35000),
           produceSpent: Math.max(0, Number(budget.categoryBudgets.produce.spent) || 0),
           proteinsBudget: Math.max(0, Number(budget.categoryBudgets.proteins.budget) || 40000),
@@ -410,7 +420,7 @@ export function subscribeUserCloudData(params: BootstrapParams): () => void {
             spentSoFar: Number(d.spentSoFar) || 0,
             currentDay: Number(d.currentDay) || 14,
             totalDays: Number(d.totalDays) || 31,
-            frequency: d.frequency === 'Weekly' ? 'Weekly' : 'Monthly',
+            frequency: normalizeBudgetFrequency(d.frequency),
             categoryBudgets: {
               produce: {
                 budget: Number(d.produceBudget) || 35000,
